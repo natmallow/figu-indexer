@@ -1,0 +1,79 @@
+#php_flag short_open_tag on
+
+# SetEnv HTTP_ENVIRONMENT "dev"
+# Loads the autoloader script before executing main PHP file
+php_value auto_prepend_file C:/xampp/htdocs/figuarizona/autoload.php
+#php_value auto_prepend_file C:/xampp/htdocs/figuarizona/vendor/autoload.php
+
+# php_flag display_startup_errors on
+# php_flag display_errors on
+# php_flag html_errors on
+
+php_flag error_reporting 2039
+
+RewriteEngine On 
+RewriteCond %{HTTPS} off 
+RewriteCond %{dev.figuarizona.org} off 
+RewriteRule (.*) https://www.figuarizona.org%{REQUEST_URI}
+
+#
+#RewriteCond %{SERVER_PORT} 443
+#RewriteCond %{SERVER_PORT} 80
+
+RewriteBase /
+
+RewriteCond %{HTTP:Accept-Language} ^en [NC]
+RewriteRule ^$ /en/ [L,R=301]
+
+RewriteCond %{HTTP:Accept-Language} ^es [NC]
+RewriteRule ^$ /es/ [L,R=301]
+
+# else redirect to the English version
+RewriteRule ^$ /en/ [L,R=301]
+
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^(en|es)/?$ index.php?lang=$1 [QSA,NC,L]
+
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^(en|es)/search/?$ search.php?lang=$1 [QSA,NC,L]
+
+RewriteCond %{REQUEST_FILENAME} !-f [OR]
+RewriteCond %{REQUEST_FILENAME} !-d 
+RewriteRule ^(en|es)/article/([0-9]+)/?(.+)?$ article.php?id_articles=$2&title=$3&lang=$1 [NE,QSA,L]
+
+RewriteCond %{REQUEST_FILENAME} !-f [OR]
+RewriteCond %{REQUEST_FILENAME} !-d 
+RewriteRule ^(en|es)/sections/([0-9]+)/(.+)/?$ menu.php?id_sections=$2&name=$3&lang=$1 [QSA,L]
+
+RewriteCond %{REQUEST_FILENAME} !-f [OR]
+RewriteCond %{REQUEST_FILENAME} !-d 
+RewriteRule ^door\-([a-zA-Z0-9]+)/?$ /gnome/door.php?security_id=$1 [QSA,L]
+
+# Check if the host is api.mysite.com
+# RewriteCond %{HTTP_HOST} ^api\.figuarizona\.com$ [NC]        /// production
+# RewriteCond %{HTTP_HOST} ^devapi\.figuarizona\.com$ [NC] #dev
+
+# Rewrite URLs for publication and user
+# RewriteRule ^indexer/(publication|user) /gnome/indexer/api/index.php [L,QSA]
+
+
+#RewriteCond %{REQUEST_FILENAME} !-f [OR]
+#RewriteCond %{REQUEST_FILENAME} !-d 
+#RewriteRule ^(.*)/?$  index.php?lang=en&page=$1 [L,QSA]
+
+
+# Loads the autoloader script before executing main PHP file
+# php_value auto_prepend_file  ./includes/autoprepend.php
+
+# php_value include_path ./var/www/html/public_html/
+# php_value auto_prepend_file "./../auto_prepend_file.php"
+# php_value auto_append_file .:/auto_append_file.php
+
+
+#http://dev.figuarizona.org/article/about-figu/2/billy-eduard-albert-meier
+
+
+
+
