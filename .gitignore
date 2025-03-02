@@ -1,0 +1,18 @@
+/nbproject/private/
+includes/crystal/settings.config.php
+gnome/includes/email.config.php
+media/
+
+node_modules
+
+nbproject
+
+.vscode
+
+##### SASS
+.sass-cache/
+*.css.map
+*.sass.map
+*.scss.map
+
+.env

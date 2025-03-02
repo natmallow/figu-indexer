@@ -1,0 +1,30 @@
+#php_flag short_open_tag on
+
+# Loads the autoloader script before executing main PHP file
+#php_value auto_prepend_file /var/www/html/public_html/api/includes/autoprepend.php
+
+ php_flag display_errors on
+
+# DirectoryIndex az_login.php
+
+# SetEnv HTTP_ENVIRONMENT "dev"
+
+# Options +FollowSymLinks
+
+
+#RewriteCond %{SERVER_PORT} 433
+#RewriteCond %{SERVER_PORT} 80
+
+
+RewriteEngine On
+#RewriteBase /gnome/
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^login$ az_login.php [L]
+
+RewriteRule ^access$ az_request_access.php [L]
+
+RewriteRule ^forgot$ az_forgot_password.php [L]
+
+
+

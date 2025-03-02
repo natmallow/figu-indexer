@@ -1,0 +1,17 @@
+{
+    "require": {
+        "phpmailer/phpmailer": "^6.1",
+        "phpclasses/zoom-api": ">=1.0.0",
+        "ivopetkov/html5-dom-document-php": "2.*",
+        "webonyx/graphql-php": "*",
+        "cboden/ratchet": "^0.4",
+        "predis/predis": "^2.2"
+    },
+    "repositories":
+            [
+                {
+                    "type": "composer",
+                    "url": "https:\/\/www.phpclasses.org\/"
+                }
+            ]
+}

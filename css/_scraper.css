@@ -1,0 +1,64 @@
+.box.alt {
+  border: 0;
+  border-radius: 10px;
+  padding: 12px;
+  background-color: #f3f9ff;
+}
+
+#closeModal {
+  font-size: 2em;
+  color: #ff3c00;
+  position: relative;
+  top: -18px;
+  right: -16px;
+  background-color: white;
+  line-height: 0.7;
+}
+
+#closeModal:hover {
+  font-weight: bold;
+  text-shadow: 2px 2px 5px #ccc;
+}
+
+.grid-container {
+  /* display: unset;
+  /* grid-template-columns: repeat(2, auto); 
+  grid-column-gap: 9px;
+  overflow-x: auto; */
+padding: 10px;
+}
+
+.grid-container div {
+  word-break: break-word;
+}
+
+table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+td {
+  word-wrap: break-word;
+}
+
+/* The sticky class is added to the navbar with JS when it reaches its scroll position */
+.sticky {
+  position: relative;
+  background-color: #f3f9ff;
+  z-index: 10;
+}
+
+/* https://rahool.github.io/jquery-drawer/js/jquery.drawer.js */
+/* .sticky div.row {
+  width: 75%;
+  margin: auto;
+} */
+
+/* .offset {
+  padding-top: 450px; 
+} */
+
+.toEnumerate {
+  background-color: rgb(255, 255, 102);
+}
+
