@@ -1,12 +1,3 @@
-<!-- <header id="header" >
-   <div>
-    <h2><a href="/index.php" ><strong>FIGU</strong>-Interessengruppe f&uuml;r Missionswissen Northern Arizona</a></h2>
-   </div>
-    <div class="imgwrap">
-        <img src="/media/images/sssc.jpg" alt="" class="ssc">
-    </div>
-</header> -->
-<!-- <div>FIGU-Interessengruppe f&uuml;r Missionswissen Northern Arizona</div> -->
 <?php
 $index = str_contains($_SERVER["REQUEST_URI"], 'gnome') ? "/gnome/index.php" : "/index.php";
 ?>
@@ -25,7 +16,7 @@ $index = str_contains($_SERVER["REQUEST_URI"], 'gnome') ? "/gnome/index.php" : "
   <div class="d-flex align-items-center justify-content-between">
     <a href=<?= $index ?> class="logo d-flex align-items-center">
       <!-- <img src="assets/img/logo.png" alt=""> -->
-      <span class="d-none d-lg-block">Figu Arizona</span>
+      <span class="d-none d-lg-block">Figu Indexer</span>
     </a>
     <i class="bi bi-list toggle-sidebar-btn"></i>
   </div><!-- End Logo -->

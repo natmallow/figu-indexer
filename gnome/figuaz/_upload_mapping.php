@@ -4,7 +4,7 @@ $SECURITY->isLoggedIn();
 
 $lang = empty($_GET['lang' ]) ? 'en' : $_GET['lang'];
 
-$target_dir = ".." . DIRECTORY_SEPARATOR . "media" . DIRECTORY_SEPARATOR;
+$target_dir = ".." . DIRECTORY_SEPARATOR .".." . DIRECTORY_SEPARATOR . "media" . DIRECTORY_SEPARATOR;
 
 
 $currentUploads = [];

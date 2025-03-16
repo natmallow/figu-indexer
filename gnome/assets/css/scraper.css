@@ -14,6 +14,11 @@
   background-color: white;
   line-height: 0.7;
 }
+#closeModal.rst {
+  top: 0px;
+  right: 0px;
+  font-size: 1em;
+}
 
 #closeModal:hover {
   font-weight: bold;
@@ -66,6 +71,6 @@ td {
 
 .toEnumerate {
   background-color: rgb(255, 255, 102);
-} 
+}
 
 /*# sourceMappingURL=scraper.css.map */

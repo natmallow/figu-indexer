@@ -31,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <div class="row justify-content-center mt-5">
 
             <header id="header" class="col-12 text-center">
-                <h1>Forgot password to FIGU AZ</h1>
+                <h1>Forgot password to FIGU Indexer</h1>
                 <a href="login" class="d-block mb-3"><strong>Back to login</strong></a>
             </header>
 

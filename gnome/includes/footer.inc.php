@@ -10,8 +10,8 @@
       <!-- Licensing information: https://bootstrapmade.com/license/ -->
       <!-- Purchase the pro version with working PHP/AJAX contact form: https://bootstrapmade.com/nice-admin-bootstrap-admin-html-template/ -->
       <!-- Designed by <a href="https://bootstrapmade.com/">BootstrapMade</a> -->
-      Developed Designed by Nathanael and BootstrapMade<br />
-      QA: FiguAZ, FiguHealth
+      Template by BootstrapMade<br />
+      Developed and Tested by: Figu Indexer (Health) group (Ken, Nell, Tamara, Michael, David H, Nathanael, Synthia, Keith)
     </div>
   </footer><!-- End Footer -->
 

@@ -1,6 +1,6 @@
 
 <base href="/">
-<title>FIGU-Interessengruppe für Missionswissen Northern Arizona</title>
+<title>FIGU-Indexer</title>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
@@ -11,6 +11,7 @@
 
 <link rel="shortcut icon" href="/favicon_az.ico">
 <link rel="stylesheet" type="text/css" href="css/_custom.css">
+<link rel="stylesheet" type="text/css" href="css/_style.css">
 <link rel="stylesheet" type="text/css" href="css/_main.css">
 <link rel="stylesheet" type="text/css" href="css/paginate.css">
 <link rel="stylesheet" type="text/css" href="css/bootstrap/bootstrap.min.css">

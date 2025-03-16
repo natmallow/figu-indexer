@@ -25,9 +25,7 @@ $text_color = '';
 $optionalFields = [];
 $metaFields = [];
 
-
-
-
+$indexId = filter_input(INPUT_GET, 'index_id');
 
 
 $yesNoTmpDeleteVars = $metaTagTmpDeleteVars = array('{{indicesId}}', '{{saveVal}}', '{{html}}');
@@ -69,21 +67,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 
     if (filter_input(INPUT_POST, 'action') == 'edit') {
-        $index_id = $Indices->updateIndex();
-        header("Location: ./index_detail.php?index_id=$index_id&action=edit&lang=" . lang());
+        $indexId = $Indices->updateIndex();
+        header("Location: ./index_detail.php?index_id=$indexId&action=edit&lang=" . lang());
         exit();
     }
 }
 
-$index_id = filter_input(INPUT_GET, 'index_id') ? filter_input(INPUT_GET, 'index_id') : null;
-if (!is_null($index_id)) {
+
+
+if (!is_null($indexId)) {
 
     $index =  $Indices->getIndex($_GET['index_id']);
     extract($index);
     $optionalFields = $Indices->getOptionalFields($_GET['index_id']);
     $metaFields =  $Indices->getMetaFields($_GET['index_id']);
 
-    $indexId = $_GET['index_id'];
     $SECURITY->indexPermission($indexId)?->hasRightAccess('can_admin', 'Admin access needed');
 
     // $ownerName = first and last, $ownerId == $user_id
@@ -108,7 +106,7 @@ if (!is_null($index_id)) {
 </head>
 
 <body class="">
-    <?php include __DIR__ . '../../includes/topnav.inc.php'; ?>
+    <?php include __DIR__ . '/../includes/topnav.inc.php'; ?>
     <?php include '../includes/sidebar.inc.php'; ?>
     <main id="main" class="main">
 
@@ -130,12 +128,12 @@ if (!is_null($index_id)) {
             </nav>
         </div><!-- End Page Title -->
         <section class="section" id="wrapper">
+
             <div class="row">
                 <div class="col-md-12">
                     <?php include '../includes/head-resp.inc.php'; ?>
                 </div>
             </div>
-
 
             <?php if (!empty($_GET['action']) && ($_GET['action'] == 'edit' || $_GET['action'] == 'add')) : ?>
                 <form id="sectionForm" method="POST">
@@ -158,6 +156,7 @@ if (!is_null($index_id)) {
                         </div>
 
                         <div class="col-md-4 mb-2">
+
                             <?php if ($indices_id) : ?>
                                 <div class="flex-blk mb-1">
                                     <label for="description_html">Associated indices:</label>
@@ -167,55 +166,48 @@ if (!is_null($index_id)) {
                                 <aside class="pl-2" id="associatedIndices">
                                 </aside>
                             <?php endif ?>
+
                         </div>
+                            
+                        <!-- Keyword add section start -->
 
 
+                        <?php if ($indices_id != '') : ?>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                        <div class="col-md-12 mb-2">
-
-                            <div class="input-group mb-3">
-                                <span class="input-group-text" id="add-keyword-tooltip"><i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" title="Add a single word or multiple words separated by a ( , )"></i></span>
-                                <input type="text" class="form-control" id="addkeywords" name="addkeywords" placeholder="Keywords" data-index-id="<?= $index_id ?>" aria-describedby="add-keyword-tooltip">
-                                <button class="btn btn-primary" type="button" onclick="KeyWordCls.linkKeyword()" data-bs-toggle="tooltip" title="Add keywords">
-                                    + <i class='bx bxs-save'></i>
-                                </button>
-                            </div>
-
-
-                            <div id="keywordsContainer">
-                                <div id="keywordChips">
-                                    <!----    keywords as chips    --->
-                                    <?php
-                                    $keyWords = $IndicesKeywordService->getIndicesMasterKeywords($indices_id);
-                                    $keyWords = is_null($keyWords) ? [] : $keyWords;
-
-                                    foreach ($keyWords as $word) :
-                                        $word = (object) $word;
-                                    ?>
-
-
-                                        <div class="chip" id="chip-keyword-<?= $word->id ?>" data-chip-val="<?= $word->value ?>">
-                                            <?= $word->value ?>
-                                            <span class="closebtn" onclick="KeyWordCls.unlinkKeyword(event, <?= $indices_id ?>, <?= $word->id ?>)">&times;</span>
-                                        </div>
-                                    <?php endforeach; ?>
-                                    <!----    keywords as chips    --->
+                            <div class="col-md-12 mb-2">
+                                <!-- keyword input box -->
+                                <div class="input-group mb-3">
+                                    <span class="input-group-text" id="add-keyword-tooltip"><i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" title="Add a single word or multiple words separated by a ( , )"></i></span>
+                                    <input type="text" class="form-control" id="addkeywords" name="addkeywords" placeholder="Keywords" data-index-id="<?= $indexId ?>" aria-describedby="add-keyword-tooltip">
+                                    <button class="btn btn-primary" type="button" onclick="KeyWordCls.linkKeyword()" data-bs-toggle="tooltip" title="Add keywords">
+                                        + <i class='bx bxs-save'></i>
+                                    </button>
                                 </div>
+                                <!-- keyword display -->
+                                <div id="keywordsContainer">
+                                    <div id="keywordChips">
+                                        <!----    keywords as chips    --->
+                                        <?php
+                                        $keyWords = $IndicesKeywordService->getIndicesMasterKeywords($indices_id);
+                                        $keyWords = is_null($keyWords) ? [] : $keyWords;
+
+                                        foreach ($keyWords as $word) :
+                                            $word = (object) $word;
+                                        ?>
+
+
+                                            <div class="chip" id="chip-keyword-<?= $word->id ?>" data-chip-val="<?= $word->value ?>">
+                                                <?= $word->value ?>
+                                                <span class="closebtn" onclick="KeyWordCls.unlinkKeyword(event, <?= $indices_id ?>, <?= $word->id ?>)">&times;</span>
+                                            </div>
+                                        <?php endforeach; ?>
+                                        <!----    keywords as chips    --->
+                                    </div>
+                                </div>
+
                             </div>
+                            <!-- Keyword add section end -->
+
 
                             <!-- Bootstrap Confirmation Modal -->
                             <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
@@ -223,15 +215,15 @@ if (!is_null($index_id)) {
                                     <div class="modal-content">
                                         <div class="modal-header">
                                             <h5 class="modal-title" id="confirmationModalLabel">Confirm Action</h5>
-                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                                <span aria-hidden="true">&times;</span>
-                                            </button>
+                                            <!-- Updated close button -->
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                         </div>
                                         <div class="modal-body">
                                             Are you sure you want to unlink this keyword?
                                         </div>
                                         <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                                            <!-- Updated cancel button -->
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                                             <button type="button" class="btn btn-primary" id="confirmAction">Confirm</button>
                                         </div>
                                     </div>
@@ -239,10 +231,12 @@ if (!is_null($index_id)) {
                             </div>
 
 
-                        </div>
-
+                        <?php else : ?>
+                            <div class="col-md-12"><strong>Please save index to add keywords</strong></div>
+                        <?php endif; ?>
 
                         <script>
+                            // Keyword add Js Code
                             const ajaxPost = (jsonData, callback = '') => {
                                 // add loader here
                                 // console.log(`callback is : ${callback}`)
@@ -265,7 +259,6 @@ if (!is_null($index_id)) {
                             }
 
                             class Keyword {
-
 
                                 constructor(ajaxP) {
                                     // this.node = node;
@@ -308,7 +301,7 @@ if (!is_null($index_id)) {
                                     const requestObj = {
                                         "action": "link-keyword",
                                         "keywords": newKeyWords,
-                                        "indices_id": <?= $indexId ?>
+                                        "indices_id": <?= json_encode($indexId ?: null) ?>
                                     };
                                     this.ajax(requestObj, this.linkKeywordResponseHandler);
                                 }
@@ -320,7 +313,6 @@ if (!is_null($index_id)) {
                                  */
                                 linkKeywordResponseHandler(response) {
 
-
                                     const keywordsContainer = document.getElementById("keywordChips");
                                     let htmlToAdd = "";
 
@@ -331,7 +323,7 @@ if (!is_null($index_id)) {
                                             htmlToAdd += `<div class="chip new-meta" id="chip-keyword-${item.id}" data-chip-val="${item.value}">
                                                            ${item.value}
                                                         <span class="closebtn" data-indices-id="${response.indices_id}" data-keyword-id="${item.id}">&times;</span>
-                                                    </div>`;
+                                                    </div> `;
                                         }
 
                                     });
@@ -441,11 +433,11 @@ if (!is_null($index_id)) {
                         <div class="col-md-3 mb-2">
                             <div class="input-group mb-4 mt-3 d-flex justify-content-between align-items-center">
                                 <label for="text_color">Select index text color</label>
-                                <input type="color" id="text_color" name="text_color" value="<?= $text_color ?>">
+                                <input type="color" id="text_color" name="text_color" value="<?= $text_color ?: '#000000' ?>">
                             </div>
                             <div class="input-group mb-4 d-flex justify-content-between align-items-center">
                                 <label for="highlight_color">Select index highlight color</label>
-                                <input type="color" id="highlight_color" name="highlight_color" value="<?= $highlight_color ?>">
+                                <input type="color" id="highlight_color" name="highlight_color" value="<?= $highlight_color ?: '#ffffff' ?>">
                             </div>
                         </div>
                         <div class="col-md-9 mb-2">
@@ -578,11 +570,10 @@ if (!is_null($index_id)) {
         } catch (err) {}
 
         // indices_id
-        indicesId = <?php echo $indices_id == '' ? null : $indices_id; ?>
+        indicesId = <?= $indices_id ?>
 
 
-
-        function fetchLinkedIndices() {
+        fetchLinkedIndices = function() {
 
             const assIn = $('#associatedIndices');
             const data = {
@@ -607,6 +598,7 @@ if (!is_null($index_id)) {
         }
 
         // only fetch links 
+
         if (indicesId)
             fetchLinkedIndices();
 
@@ -646,9 +638,10 @@ if (!is_null($index_id)) {
                 }
             });
 
+            
 
             // requires id=wrapper 
-            $(wrapper).on("click", ".link-index-btn", function(e) {
+            $("#wrapper").on("click", ".link-index-btn", function(e) {
                 e.preventDefault();
 
                 // locate modal body
@@ -658,9 +651,18 @@ if (!is_null($index_id)) {
                     "indices_id": `${indicesId}`
                 }
 
-                // Show the confirm delete modal
-                var linkModal = new bootstrap.Modal(document.getElementById('linkIndexModal'));
+                // Get modal element and create Bootstrap modal instance
+                var linkModalElem = document.getElementById('linkIndexModal');
+                var linkModal = new bootstrap.Modal(linkModalElem);
                 linkModal.show();
+
+                // When the modal is hidden, check if a descendant still has focus and blur it.
+                linkModalElem.addEventListener('hidden.bs.modal', function() {
+                    if (document.activeElement && linkModalElem.contains(document.activeElement)) {
+                        document.activeElement.blur();
+                    }
+                });
+
                 // linkModal.hide();
                 $.ajax({
                     type: "POST",
@@ -724,7 +726,7 @@ if (!is_null($index_id)) {
             });
 
             // requires id=wrapper 
-            $(wrapper).on("click", ".yes-no-save", function(e) {
+            $("#wrapper").on("click", ".yes-no-save", function(e) {
                 e.preventDefault();
                 const pDiv = $(this).parent('div');
                 const saveVal = pDiv.find('input[type=text]').val();
@@ -765,7 +767,7 @@ if (!is_null($index_id)) {
             })
 
             // requires id=wrapper 
-            $(wrapper).on("click", ".yes-no-delete", function(e) {
+            $("#wrapper").on("click", ".yes-no-delete", function(e) {
                 e.preventDefault();
 
                 const pDiv = $(this).parent('div');
@@ -859,7 +861,7 @@ if (!is_null($index_id)) {
                 });
             })
 
-            $(wrapper).on("click", ".meta-delete", function(e) {
+            $("#wrapper").on("click", ".meta-delete", function(e) {
 
                 e.preventDefault();
 
@@ -1058,7 +1060,7 @@ if (!is_null($index_id)) {
 
                 const data = {
                     "action": action,
-                    "indices_id": <?= $indexId ?>,
+                    "indices_id": <?= json_encode($indexId) ?>,
                     "user_id": userId,
                     "can_admin": canAdmin
                 }

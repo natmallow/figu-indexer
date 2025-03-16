@@ -243,7 +243,6 @@ h6 {
 .card-body {
   padding: 0 20px 20px 20px;
 }
-
 .card-body.--sm {
   padding: 0px 10px;
 }
@@ -1213,6 +1212,19 @@ h6 {
   text-align: center;
   font-size: 13px;
   color: #012970;
-} 
+}
+
+.counter-box {
+  width: 10px;
+  height: 14px;
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  background: white;
+  color: #2c384e;
+  font-size: 8px;
+  text-align: center;
+  border-top-left-radius: 3px;
+}
 
 /*# sourceMappingURL=style.css.map */

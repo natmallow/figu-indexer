@@ -3,8 +3,8 @@
     $Publication = new Publication();
 
     $pages = [
-        ["name"=>"users", "url"=> "/gnome/indexer/users.php", "role" => ["admin", "user"], "icon"=> "ri-file-user-line"],
-        ["name"=>"uploads", "url"=> "/gnome/indexer/uploads.php", "role" => ["admin", "user"], "icon"=> "ri-folder-upload-line"],
+        ["name"=>"users", "url"=> "/gnome/figuaz/users.php", "role" => ["admin", "user"], "icon"=> "ri-file-user-line"],
+        ["name"=>"uploads", "url"=> "/gnome/figuaz/uploads.php", "role" => ["admin", "user"], "icon"=> "ri-folder-upload-line"],
         ["name"=>"indices", "url"=> "/gnome/indexer/indices.php", "role"  => ["indexer_admin", "indexer_user"], "icon"=> "bx bxs-dice-1"],
         ["name"=>"publication uploader", "url"=> "/gnome/indexer/publications_index.php", "role" => ["indexer_admin", "indexer_user"], "icon"=> "bx bxs-dice-2"],
         ["name"=>"keywords index", "url"=> "/gnome/indexer/keywords_index.php", "role" => ["indexer_admin", "indexer_user"], "icon"=> "bx bxs-dice-3"]

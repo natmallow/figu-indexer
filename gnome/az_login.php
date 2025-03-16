@@ -95,7 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <div class="mb-3">
                 <h1>
                     <a href=<?= $index ?>>
-                        <strong>FIGU</strong>-Interessengruppe f&uuml;r Missionswissen Northern Arizona</a> - Login
+                        <strong>FIGU</strong>-Indexer Carolina</a> - Login
                 </h1>
                 <a href="/" class="text-decoration-none"><strong>To Main Page</strong></a>
             </div>
@@ -115,18 +115,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 
                 <div class="col-md-6">
-
-                    <div class="col-md-12">
-                        <div class="list-group" id="list-tab" role="tablist">
-                            <a class="list-group-item list-group-item-action active" id="figuaz-login" data-toggle="list" href="#list-figuaz-login" role="tab" aria-controls="figuaz-login">FiguAz Admin</a>
-                            <a class="list-group-item list-group-item-action" id="indexer-login" data-toggle="list" href="#list-indexer-login" role="tab" aria-controls="indexer-login">Figu Indexer Admin</a>
-                        </div>
-                    </div>
-
                     <div class="col-md-12">
                         <div class="tab-content" id="nav-tabContent">
                             <div class="tab-pane fade show active" id="list-figuaz-login" role="tabpanel" aria-labelledby="figuaz-login">
-                                Jo
+
                                 <?php if (!isset($_SESSION['resetPassword'])) : ?>
                                     <form method="post">
                                         <?php if (in_array($error, ['generalErr', 'locked', 'activate'])) : ?>
@@ -145,12 +137,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                         <div class="mb-3">
                                             <input type="text" name="username" id="username" class="form-control" placeholder="Username" required>
                                         </div>
+
                                         <div class="mb-3">
                                             <input type="email" name="useremail" id="useremail" class="form-control" placeholder="Email" required>
                                         </div>
+                                        
                                         <div class="mb-3">
                                             <input type="password" name="userpassword" class="form-control" placeholder="Password" required>
                                         </div>
+                                        
                                         <div class="mb-2 d-flex gap-3">
                                             <a href="forgot" class="btn btn-secondary w-100"><i class="ri-file-unknow-fill"></i> Forgot Password</a>
                                             <a href="access" class="btn btn-secondary w-100"><i class="bx bx-happy-beaming"></i> Request Access</a>

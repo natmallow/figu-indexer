@@ -6,7 +6,10 @@ if (!isset($_SERVER['SERVER_NAME'])) {
 }
 
 // Set HTTP_ENVIRONMENT based on SERVER_NAME
-if ($_SERVER['SERVER_NAME'] == 'dev.figuarizona.org' || $_SERVER['SERVER_NAME'] == 'devapi.figuarizona.org' || $_SERVER['SERVER_NAME'] == 'localhost' ) {
+if ($_SERVER['SERVER_NAME'] == 'dev.figuindexer.org' || 
+    $_SERVER['SERVER_NAME'] == 'dev.figuarizona.org' || 
+    $_SERVER['SERVER_NAME'] == 'devapi.figuarizona.org' || 
+    $_SERVER['SERVER_NAME'] == 'localhost' ) {
     $_SERVER['HTTP_ENVIRONMENT'] = 'dev';
 } else {
     $_SERVER['HTTP_ENVIRONMENT'] = 'prod';

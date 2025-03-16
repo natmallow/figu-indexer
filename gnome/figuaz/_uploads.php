@@ -77,9 +77,9 @@ $lang = empty($_GET['lang']) ? 'en' : $_GET['lang'];
 
     </main>
 
-    <?php include __DIR__ . '/../includes/script.image.inc.php'; ?>
-    <?php include __DIR__ . '/../includes/script.nav.inc.php'; ?>
-    <?php include __DIR__ . '/includes/footer.inc.php'; ?>
+    <?php include __DIR__ . '/../../includes/script.image.inc.php'; ?>
+    <?php include __DIR__ . '/../../includes/script.nav.inc.php'; ?>
+    <?php include __DIR__ . '/../includes/footer.inc.php'; ?>
     <script>
         function factory() {
             initModal('container-image', 'openDirectoryView', 'closeModal', 'container-dir', '', ['imageDeleteHandler']);
