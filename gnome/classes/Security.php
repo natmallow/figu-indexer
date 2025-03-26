@@ -39,6 +39,12 @@ class Security extends DBConnection {
         return $this;
     }
 
+    public function isSuperAdmin() {
+        if (in_array('super_admin', json_decode($_SESSION['roles']))) {
+            return true;
+        } 
+    }
+
     public function indexPermission($indexId) {
              
         $Indices = new Indices();

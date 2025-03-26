@@ -2,7 +2,7 @@
 
 # SetEnv HTTP_ENVIRONMENT "dev"
 # Loads the autoloader script before executing main PHP file
-php_value auto_prepend_file C:/xampp/htdocs/figuarizona/autoload.php
+php_value auto_prepend_file C:/xampp/htdocs/figu-indexer/autoload.php
 # figu carolina
 #php_value auto_prepend_file /var/www/html/autoload.php
 

@@ -96,6 +96,15 @@ if ( $_SERVER[ 'REQUEST_METHOD' ] == 'POST' ) {
         $keywordRtnArr['success'] = 1;
         echo json_encode($keywordRtnArr);
 
+    } elseif ( filter_input( INPUT_POST, 'action' ) == 'delete-index' ) {
+        // return $Indices->updateIndexOptionalField( $id );
+        $indicesId = filter_input(INPUT_POST, 'indicesId');
+
+        $Indices->deleteMeta( $id );
+        
+        $keywordRtnArr['success'] = 1;
+        echo json_encode($keywordRtnArr);
+
     } elseif ( filter_input( INPUT_POST, 'action' ) == 'delete-option' ) {
         $id = filter_input( INPUT_POST, 'indices_optional_field_id' );
         $Indices->deleteIndexOptionalField( $id );

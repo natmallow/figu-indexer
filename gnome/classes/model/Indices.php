@@ -475,7 +475,75 @@ class Indices extends DBConnection {
     }
 
     function deleteIndex($id) {
-        
+        try {
+            // Start transaction
+            $this->dbc->beginTransaction();
+    
+            // Delete related keyword associations
+            $sql1 = "DELETE FROM indices_keyword_meta WHERE indices_id = :indices_id";
+            $stmt1 = $this->dbc->prepare($sql1);
+            $stmt1->execute([':indices_id' => $id]);
+    
+            // Delete optional fields
+            $sql2 = "DELETE FROM indices_optional_field WHERE indices_id = :indices_id";
+            $stmt2 = $this->dbc->prepare($sql2);
+            $stmt2->execute([':indices_id' => $id]);
+    
+            // Delete index-user permissions
+            $sql3 = "DELETE FROM indices_permission WHERE indices_id = :indices_id";
+            $stmt3 = $this->dbc->prepare($sql3);
+            $stmt3->execute([':indices_id' => $id]);
+    
+            // Delete index links
+            $sql4 = "DELETE FROM publication_index WHERE indices_id = :indices_id";
+            $stmt4 = $this->dbc->prepare($sql4);
+            $stmt4->execute([':indices_id' => $id]);
+
+            // Delete index cache links
+            $sql5 = "DELETE FROM publication_index_cache WHERE indices_id = :indices_id";
+            $stmt5 = $this->dbc->prepare($sql5);
+            $stmt5->execute([':indices_id' => $id]);
+
+            $sql6 = "DELETE FROM publication_indices_keyword_meta_link WHERE publication_index_id = :indices_id";
+            $stmt6 = $this->dbc->prepare($sql6);
+            $stmt6->execute([':indices_id' => $id]);
+
+            $sql7 = "DELETE FROM indices_master_list_keyword_link WHERE indices_id = :indices_id";
+            $stmt7 = $this->dbc->prepare($sql7);
+            $stmt7->execute([':indices_id' => $id]);
+
+            $sql8 = "DELETE FROM indicies_master_keyword_publication_status WHERE indices_id = :indices_id";
+            $stmt8 = $this->dbc->prepare($sql8);
+            $stmt8->execute([':indices_id' => $id]);
+
+            $sql9 = "DELETE FROM publication_keyword_search_queue WHERE indices_id = :indices_id";
+            $stmt9 = $this->dbc->prepare($sql9);
+            $stmt9->execute([':indices_id' => $id]);
+
+            // delete the two way binding of all the indices link
+            $sql10 = "DELETE FROM indices_link WHERE indices_id = :indices_id OR indices_group_id = :indices_id";
+            $stmt10 = $this->dbc->prepare($sql10);
+            $stmt10->execute([':indices_id' => $id]);
+
+    
+            // Delete the main index record
+            $sqlMain = "DELETE FROM indices WHERE indices_id = :indices_id";
+            $stmtMain = $this->dbc->prepare($sqlMain);
+            $stmtMain->execute([':indices_id' => $id]);
+    
+            // Commit transaction if all queries succeed
+            $this->dbc->commit();
+    
+            return json_encode(['success' => 1, 'message' => 'Index deleted successfully.']);
+        } catch (\PDOException $e) {
+            // Rollback transaction if an error occurs
+            $this->dbc->rollBack();
+    
+            // Log error (You can implement a logging mechanism)
+            error_log("Delete Index Error: " . $e->getMessage());
+    
+            return json_encode(['error' => 'An error occurred while deleting the index. Please try again.']);
+        }
     }
 
     function updateIndex() {

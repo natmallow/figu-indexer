@@ -116,8 +116,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <?php include __DIR__ . '/../../includes/script.nav.inc.php'; ?>
     <?php include __DIR__ . '../../includes/footer.inc.php'; ?>
     <script>
-        // initModal('publication_create.php?type=<?= $publicationType ?>', 'create-modal', 'publication-creation', 'closeModal', 'containerImport',
-        // 'section-image', []);
         <?= $nameErr; ?>
     </script>
 

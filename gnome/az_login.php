@@ -55,7 +55,8 @@ function postRequest()
             $_SESSION['loggedIn'] = true;
             $_SESSION['filebrowser'] = true;
             $_SESSION['roles'] = $user->roles;
-
+            // var_dump($user);
+            // exit();
             unset($_SESSION['attempts']);
             header("location: index.php");
         }

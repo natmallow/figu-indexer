@@ -346,6 +346,7 @@ class PublicationIndex extends DBConnection
     }
 
 
+    // KEITH TODO LOOK HERE
     // saveStatus( $index_id, $publication_id, $indexing_status )
     function saveIndexPublication($indices_id, $publication_id, $publication_index_status, $notes, $tracks, $summary)
     {

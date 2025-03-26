@@ -50,7 +50,7 @@ $publicationTypes = $Publication->getPublicationTypes();
             <!-- <div class="row">
                             <div class="col-12">
                                 <label for="publication_id">Publication abbreviation Name:</label>
-                                <div class="contact-report" id="raw_html"><?= $raw_html ?></div>
+                                <div class="contact-report" id="raw_html">< ?= // $raw_html ? ></div>
                             </div>
                         </div> -->
         </section>
@@ -76,7 +76,7 @@ $publicationTypes = $Publication->getPublicationTypes();
     <?php include __DIR__ . '/../../includes/script.nav.inc.php'; ?>
     <?php include __DIR__ . '../../includes/footer.inc.php'; ?>
     <script>
-        initModal('publication_create.php?type=<?= $publicationType ?>', 'create-modal', 'publication-creation', 'closeModal', 'containerImport',
+        initModal('publication_create.php?type=<?= $publicationType ?? '' ?>', 'create-modal', 'publication-creation', 'closeModal', 'containerImport',
             'section-image', []);
     </script>
 

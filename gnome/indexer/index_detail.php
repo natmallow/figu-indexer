@@ -105,12 +105,15 @@ if (!is_null($indexId)) {
     <script src="../assets/jodit/jodit.min.js"></script>
 </head>
 
-<body class="">
+<body>
     <?php include __DIR__ . '/../includes/topnav.inc.php'; ?>
-    <?php include '../includes/sidebar.inc.php'; ?>
+    <?php include __DIR__ . '/../includes/sidebar.inc.php'; ?>
+
+    <?php // include 'includes/sidebar.inc.php'; ?>
     <main id="main" class="main">
 
-        <?php include '../includes/title.inc.php'; ?>
+        <?php include __DIR__ . '/../includes/title.inc.php'; ?>
+
         <div class="pagetitle">
             <h1>Indices</h1>
             <nav>
@@ -130,8 +133,16 @@ if (!is_null($indexId)) {
         <section class="section" id="wrapper">
 
             <div class="row">
-                <div class="col-md-12">
+                <div class="col-md-10">
                     <?php include '../includes/head-resp.inc.php'; ?>
+                </div>
+                <div class="col-md-2">
+                    <?php if ($indices_id) : ?>
+                        <a href="./indexlinks.php?index_id=<?= $indices_id ?>&lang=<?= $lang ?>" 
+                           data-bs-toggle="tooltip" 
+                           data-bs-original-title="Start or Continue indexing" 
+                           class="btn btn-success enf-len">Start Indexing</a>
+                    <?php endif ?>
                 </div>
             </div>
 
