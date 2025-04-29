@@ -38,7 +38,9 @@ if (!empty($_GET['id'])) {
 } else {
     $user = $User->getUsers();
 }
+
 $availableRoles = $Role->getRoles();
+
 ?>
 <!doctype html>
 <html>
@@ -61,12 +63,14 @@ $availableRoles = $Role->getRoles();
     <?php include __DIR__ . '/../includes/topnav.inc.php'; ?>
     <?php include __DIR__ . '/../includes/sidebar.inc.php'; ?>
 
-    <?php // include 'includes/sidebar.inc.php'; ?>
+    <?php // include 'includes/sidebar.inc.php'; 
+    ?>
     <main id="main" class="main">
 
-    <?php include __DIR__ . '/../includes/title.inc.php'; ?>
+        <?php include __DIR__ . '/../includes/title.inc.php'; ?>
 
-        <?php // include 'includes/title.inc.php'; ?>
+        <?php // include 'includes/title.inc.php'; 
+        ?>
 
         <section class="section">
             <header class="py-3 mb-4 border-bottom">
@@ -77,7 +81,8 @@ $availableRoles = $Role->getRoles();
                 </div>
             </header>
             <?php include __DIR__ . '/../includes/head-resp.inc.php'; ?>
-            <?php // include 'includes/head-resp.inc.php'; ?>
+            <?php // include 'includes/head-resp.inc.php'; 
+            ?>
 
             <div class="row mb-3">
                 <div class="col-md-12 d-flex justify-content-between align-items-center">
@@ -88,7 +93,8 @@ $availableRoles = $Role->getRoles();
             <div class="row">
                 <div class="col-md-12">
                     <?php include __DIR__ . '/../includes/head-resp.inc.php'; ?>
-                    <?php // include 'includes/head-resp.inc.php'; ?>
+                    <?php // include 'includes/head-resp.inc.php'; 
+                    ?>
                 </div>
             </div>
             <?php if (!empty($_GET['action']) && ($_GET['action'] == 'edit' || $_GET['action'] == 'add')) : ?>
@@ -123,30 +129,43 @@ $availableRoles = $Role->getRoles();
 
 
                     <div class="col-6">
-                        <label for="select1">Available Roles</label>
+                        <label for="select1">Available Roles</label> <small>'super_admin' is a role that must be added manually</small>
                         <div class="input-group mb-3">
 
                             <select class="form-select form-select-sm text-end" size="7" multiple aria-label="multiple select example" id="select1">
                                 <?php
                                 $activeRoles = [];
+                                $isSuperAdmin = false;
                                 foreach ($availableRoles as $row) :
                                     if (in_array($row["role_name"], json_decode($roles))) :
-                                        $activeRoles[] = $row;
+                                        if ($row["role_name"] == 'super_admin') {
+                                            $isSuperAdmin = true;
+                                        } else {
+                                            $activeRoles[] = $row;
+                                        }
+
                                     else :
+                                        if ($row["role_name"] != 'super_admin') {
+
                                 ?>
-                                        <option value="<?= $row["role_id"] ?>">
-                                            <?= $row["role_name"] ?>
-                                        </option>
+
+                                            <option value="<?= $row["role_id"] ?>">
+                                                <?= $row["role_name"] ?>
+                                            </option>
+
                                 <?php
+                                        }
                                     endif;
                                 endforeach;
                                 ?>
                             </select>
                             <a href="#" class="btn btn-success d-flex align-items-center" id="add">&gt;&gt;</a>
                         </div>
+
                     </div>
                     <div class="col-6">
-                        <label for="select2">Users Roles</label><br>
+                        <label for="select2">Users Roles</label>
+                        <?php if ($isSuperAdmin) echo ' <strong>This user has super admin rights!</strong>' ?>
                         <div class="input-group mb-3">
                             <a href="#" class="btn btn-danger d-flex align-items-center" id="remove">&lt;&lt;</a>
                             <select multiple id="select2" class="form-select form-select-sm" size="7" name="roles[]">

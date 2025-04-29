@@ -25,12 +25,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $indices_id = filter_var($data['indices_id'] ?? null, FILTER_VALIDATE_INT);
             $pub_type = htmlspecialchars($data['pub_type'] ?? '');
             $AjaxHandler = new AjaxResponseHandler($PublicationIndex);
-            echo $AjaxHandler->run("getIndexPublications", [$indices_id, $pub_type]);
+            echo $AjaxHandler->runAjax("getIndexPublications", [$indices_id, $pub_type])->getResponse();
             exit();
         } elseif ($data['action'] == "get-master-keywords") {
             $indices_id = filter_var($data['indices_id'] ?? null, FILTER_VALIDATE_INT);
             $AjaxHandler = new AjaxResponseHandler($IndicesKeywordService);
-            echo $AjaxHandler->run("getIndicesMasterKeywords", [$indices_id]);
+            echo $AjaxHandler->runAjax("getIndicesMasterKeywords", [$indices_id])->getResponse();
             exit();
         } elseif ($data['action'] == "run-master-keyword-search") {
             // searches can only be run on a single index source.
@@ -41,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 // var_dump($publication_ids);
             
             // $AjaxHandler = new AjaxResponseHandler($IndicesKeywordService);
-            // echo $AjaxHandler->run("masterKeywordSearch", [$indices_id, $publication_ids]);
+            // echo $AjaxHandler->runAjax("masterKeywordSearch", [$indices_id, $publication_ids])->getResponse();
             // exit();
         }elseif ($data['action'] == "run-master-keyword-search-sp") {
             header('Content-Type: text/plain');

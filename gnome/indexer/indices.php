@@ -147,8 +147,9 @@ list($indices, $paginator) = $Indices->getIndices();
                             <div class="card-actions">
 
                                 <?php if ($SECURITY->isSuperAdmin()) : ?>
+
                                     <div class="d-flex justify-content-between align-items-center gap-2">
-                                        <button class="btn btn-danger" onclick="deleteIndices(<?= $index ?>)" data-bs-toggle="tooltip" title="Delete Index" data-target="#confirmationModal">
+                                        <button class="btn btn-danger" onclick='deleteIndices(<?= $row["indices_id"] ?>)' data-bs-toggle="tooltip" title="Delete Index" data-target="#confirmationModal">
                                             <i class='bx bxs-trash'></i>
                                         </button>
 
@@ -209,28 +210,68 @@ list($indices, $paginator) = $Indices->getIndices();
     <?php if ($SECURITY->isSuperAdmin()) : ?>
         <script>
             function deleteIndices(indicesId) {
-                const modal = document.getElementById('confirmationModal');
+                const modalEl = document.getElementById('confirmationModal');
                 const confirmButton = document.getElementById('confirmAction');
 
-                $(modal).modal('show');
+                // Create Bootstrap 5 modal instance
+                const modalInstance = new bootstrap.Modal(modalEl);
 
-                confirmButton.onclick = () => {
-                    fetch("indices_ajax.php", {
+                // Remove any lingering listeners to prevent duplicate events
+                modalEl.removeEventListener('shown.bs.modal', handleShown);
+                modalEl.removeEventListener('hidden.bs.modal', handleHidden);
+
+                // Define shown event handler
+                function handleShown() {
+                    // Now safe to interact with inner elements
+                    modalEl.setAttribute('aria-hidden', 'false');
+                }
+
+                // Define hidden event handler
+                function handleHidden() {
+                    modalEl.setAttribute('aria-hidden', 'true');
+                }
+
+                // Attach event listeners
+                modalEl.addEventListener('shown.bs.modal', handleShown);
+                modalEl.addEventListener('hidden.bs.modal', handleHidden);
+
+                // Show modal (Bootstrap handles aria-hidden internally)
+                modalInstance.show();
+
+                confirmButton.onclick = async () => {
+                    try {
+                        const response = await fetch("indices_ajax.php", {
                             method: "POST",
                             headers: {
+                                // "Content-Type": "application/x-www-form-urlencoded"
                                 "Content-Type": "application/json"
                             },
                             body: JSON.stringify({
-                                action: 'delete-index',
-                                indicesId
+                                action:'delete-index',
+                                indicesId:`${indicesId}`
                             })
-                        })
-                        .then(response => response.json())
-                        .then(data => {
-                            setTimeout(() => window.location.reload(), 3000);
-                            modal.querySelector('.modal-body').innerHTML = `Index was deleted.`;
-                        })
-                        .catch(error => console.error("Error:", error));
+                        });
+
+                        // Check if the response has JSON content
+                        const contentType = response.headers.get("content-type");
+                        if (!contentType || !contentType.includes("application/json")) {
+                            const text = await response.text();
+                            throw new Error(`Expected JSON but got: ${text}`);
+                        }
+
+                        const data = await response.json();
+                        if (data?.status == 'error') {
+                            modalEl.querySelector('.modal-body').innerHTML = `<span class="text-danger">Failed to delete index:<br><br> ${data?.message}</span>`;
+                            return;
+                        }
+                        // console.log('data', data);
+
+                        modalEl.querySelector('.modal-body').innerHTML = `Index was deleted.`;
+                        setTimeout(() => window.location.reload(), 3000);
+                    } catch (error) {
+                        console.error("Error:", error);
+                        modalEl.querySelector('.modal-body').innerHTML = `<span class="text-danger">Failed to delete index: ${error.message}</span>`;
+                    }
                 };
             }
         </script>

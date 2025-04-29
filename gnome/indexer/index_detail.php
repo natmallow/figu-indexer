@@ -109,7 +109,8 @@ if (!is_null($indexId)) {
     <?php include __DIR__ . '/../includes/topnav.inc.php'; ?>
     <?php include __DIR__ . '/../includes/sidebar.inc.php'; ?>
 
-    <?php // include 'includes/sidebar.inc.php'; ?>
+    <?php // include 'includes/sidebar.inc.php'; 
+    ?>
     <main id="main" class="main">
 
         <?php include __DIR__ . '/../includes/title.inc.php'; ?>
@@ -136,12 +137,12 @@ if (!is_null($indexId)) {
                 <div class="col-md-10">
                     <?php include '../includes/head-resp.inc.php'; ?>
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-2 text-end">
                     <?php if ($indices_id) : ?>
-                        <a href="./indexlinks.php?index_id=<?= $indices_id ?>&lang=<?= $lang ?>" 
-                           data-bs-toggle="tooltip" 
-                           data-bs-original-title="Start or Continue indexing" 
-                           class="btn btn-success enf-len">Start Indexing</a>
+                        <a href="./indexlinks.php?index_id=<?= $indices_id ?>&lang=<?= $lang ?>"
+                            data-bs-toggle="tooltip"
+                            data-bs-original-title="Start or Continue indexing"
+                            class="btn btn-success enf-len">Continue Indexing</a>
                     <?php endif ?>
                 </div>
             </div>
@@ -171,7 +172,10 @@ if (!is_null($indexId)) {
                             <?php if ($indices_id) : ?>
                                 <div class="flex-blk mb-1">
                                     <label for="description_html">Associated indices:</label>
-                                    <button type="button" data-bs-toggle="tooltip" data-bs-original-title="Add or Remove linked indices" class="link-index-btn btn btn-success"><i class="bi bi-link-45deg"></i></button>
+                                    <button type="button" 
+                                    data-bs-toggle="tooltip" 
+                                    data-bs-original-title="Add or Remove linked indices" 
+                                    class="link-index-btn btn btn-dark">Link or Unlink indices</button>
                                 </div>
 
                                 <aside class="pl-2" id="associatedIndices">
@@ -179,7 +183,7 @@ if (!is_null($indexId)) {
                             <?php endif ?>
 
                         </div>
-                            
+
                         <!-- Keyword add section start -->
 
 
@@ -369,15 +373,6 @@ if (!is_null($indexId)) {
 
                             const KeyWordCls = new Keyword(ajaxPost);
                         </script>
-
-
-
-
-
-
-
-
-
 
 
 
@@ -598,7 +593,9 @@ if (!is_null($indexId)) {
                 dataType: 'html',
                 cache: false,
                 success: function(resp) {
-                    // console.log(resp)
+                    if (resp == '') {
+                        resp = ' There are no associated indices '
+                    } 
                     // update Associated index area
                     assIn.html(resp);
                 },
@@ -649,7 +646,7 @@ if (!is_null($indexId)) {
                 }
             });
 
-            
+
 
             // requires id=wrapper 
             $("#wrapper").on("click", ".link-index-btn", function(e) {
@@ -754,12 +751,12 @@ if (!is_null($indexId)) {
                     data: data,
                     dataType: 'json',
                     cache: false,
-                    success: function(html) {
+                    success: function(response) {
 
                         const values = {
                             '{{indicesId}}': indicesId,
                             '{{saveVal}}': saveVal,
-                            '{{html}}': html
+                            '{{html}}': response?.data?.indices_optional_field_id
                         }
 
 
@@ -781,7 +778,7 @@ if (!is_null($indexId)) {
             $("#wrapper").on("click", ".yes-no-delete", function(e) {
                 e.preventDefault();
 
-                const pDiv = $(this).parent('div');
+                const optionContianer = $(this).parent('div');
                 const indicesOptionalFieldId = $(this).attr('data-indices-optional-field-id');
 
                 // Show the confirm delete modal
@@ -801,11 +798,20 @@ if (!is_null($indexId)) {
                         data: data,
                         dataType: 'json',
                         cache: false,
-                        success: function(html) {
-                            pDiv.remove();
+                        success: function(response) {
+                            if (response.status === 'success') {
+                                optionContianer.remove();
+
+                                const modal = bootstrap.Modal.getInstance(document.getElementById('confirmDeleteModal'));
+                                modal.hide();
+                            } else {
+                                $('#confirmDeleteModal .modal-body').html(`<span style="color:red">${response.message}</span>`);
+                            }
                         },
-                        error: function(res) {
-                            console.log('no', res);
+                        error: function(xhr, status, error) {
+                            const message = `AJAX error: ${xhr.responseText || error}`;
+                            $('#confirmDeleteModal .modal-body').html(`<span style="color:red">${message}</span>`);
+                            console.error(message);
                         }
                     });
 
@@ -852,12 +858,12 @@ if (!is_null($indexId)) {
                     data: data,
                     dataType: 'json',
                     cache: false,
-                    success: function(html) {
+                    success: function(response) {
 
                         const values = {
                             '{{indicesId}}': indicesId,
                             '{{saveVal}}': saveVal,
-                            '{{html}}': html
+                            '{{html}}': response.data?.indices_keyword_meta_id
                         }
 
                         const output = `<?= $metaTagTmpDelete ?>`.replace(/{{indicesId}}|{{saveVal}}|{{html}}/g, function(match) {
@@ -876,11 +882,12 @@ if (!is_null($indexId)) {
 
                 e.preventDefault();
 
-                const pDiv = $(this).parent('div');
+                const metaContainer = $(this).parent('div');
                 const indicesMetaId = $(this).attr('data-indices-keyword-meta-id');
 
                 // Show the confirm delete modal
-                var deleteModal = new bootstrap.Modal(document.getElementById('confirmDeleteModal'));
+                const deleteElement = document.getElementById('confirmDeleteModal')
+                var deleteModal = new bootstrap.Modal(deleteElement);
                 deleteModal.show();
 
                 // Handle the confirm delete button click
@@ -897,11 +904,20 @@ if (!is_null($indexId)) {
                         data: data,
                         dataType: 'json',
                         cache: false,
-                        success: function(html) {
-                            pDiv.remove();
+                        success: function(response) {
+                            if (response.status === 'success') {
+                                metaContainer.remove();
+
+                                const modal = bootstrap.Modal.getInstance(document.getElementById('confirmDeleteModal'));
+                                modal?.hide();
+                            } else {
+                                $('#confirmDeleteModal .modal-body').html(`<span style="color:red">${response.message}</span>`);
+                            }
                         },
-                        error: function(res) {
-                            console.log('no', res)
+                        error: function(xhr, status, error) {
+                            const message = `AJAX error: ${xhr.responseText || error}`;
+                            $('#confirmDeleteModal .modal-body').html(`<span style="color:red">${message}</span>`);
+                            console.error(message);
                         }
                     });
                 })
