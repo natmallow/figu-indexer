@@ -241,7 +241,7 @@ $availableRoles = $Role->getRoles();
                                 <th>User</th>
                                 <th>Email</th>
                                 <th>Phone</th>
-                                <th colspan="4">Actions</th>
+                                <th colspan="3">Actions</th>
                                 <th>Delete</th>
                             </tr>
                         </thead>
@@ -261,16 +261,16 @@ $availableRoles = $Role->getRoles();
                                     <td><?= $row["phone"] ?>
                                     <td style="border-left: 1px #ccc solid">
                                         <a href="/gnome/indexer/users.php?id=<?= $row["username"] ?>&action=edit" class="admin-link">Edit</a>
-                                    <td>
-                                        <a href="/gnome/indexer/users_permissions.php?id=<?= $row["username"] ?>&action=edit" class="admin-link">Permissions</a>
+                                    <!-- <td>
+                                        <a href="/gnome/indexer/users_permissions.php?id=<?= $row["username"] ?>&action=edit" class="admin-link">Permissions</a> -->
 
                                     <td> <input onclick="runLocked('<?= $row['username'] ?>')" id="is_locked-<?= $row["username"] ?>" type="checkbox" <?php if ($row["is_locked"] == '1') echo "checked='checked'"; ?>>
                                         <label for="is_locked-<?= $row["username"] ?>" style="color:#f48800; font-size: .8em;padding-right:0px;">Locked</label>
-                                    <td> <a onclick="runPswdReset('<?= $row['username'] ?>')" id="is_reset_password-<?= $row["username"] ?>" class="admin-link">
+                                    <td> <a href="javascript:;" onclick="runPswdReset('<?= $row['username'] ?>')" id="is_reset_password-<?= $row["username"] ?>" class="admin-link">
                                             Password Reset</a>
 
                                     <td style="background-color: #fff">
-                                        <a title="Delete <?= $row['username'] ?>" onclick="return confirm('A you sure you want to Remove \n\n<?= $row['name_first'] ?>, <?= $row['name_last'] ?> \n\n from users?')?runDelete('<?= $row['username'] ?>'):false;" class="admin-link">Remove</a>
+                                        <a href="javascript:;" title="Delete <?= $row['username'] ?>" onclick="return confirm('A you sure you want to Remove \n\n<?= $row['name_first'] ?>, <?= $row['name_last'] ?> \n\n from users?')?runDelete('<?= $row['username'] ?>'):false;" class="admin-link">Remove</a>
 
                                 </tr>
                             <?php endforeach ?>
@@ -305,35 +305,25 @@ $availableRoles = $Role->getRoles();
         };
 
         function runLocked(username) {
-            // var d = document.getElementById('notification');
-            // d.style.display = 'none';
+
             var fetchPromise = fetch(`/gnome/indexer/user.php?username=${username}&action=toggleLock`);
             fetchPromise.then(response => {
                 return response.json();
             }).then(data => {
                 if (data.newValue === 1) {
-                    // d.innerHTML = `User ${username} has been locked`;
                     toggleGenErr(`User ${username} has been locked`, true);
                 } else {
-                    // d.innerHTML = `User ${username} is unLocked`;
                     toggleGenErr(`User ${username} is unLocked`, true);
                 }
-                // d.className = 'notification fadeOut';
-                // d.style.display = 'block';
             });
         };
 
         function runPswdReset(username) {
-            var d = document.getElementById('notification');
-            d.style.display = 'none';
             var fetchPromise = fetch(`/gnome/indexer/user.php?username=${username}&action=resetPswd`);
             fetchPromise.then(response => {
                 return response.json();
-            }).then(() => {
-                // console.log(data);
-                d.innerHTML = 'Password has been reset';
-                d.className = 'notification fadeOut';
-                d.style.display = 'block';
+            }).then((data) => {
+                toggleGenErr(`User ${username} password reset enabled`, true);
             });
         };
 
