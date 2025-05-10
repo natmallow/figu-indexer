@@ -10,8 +10,8 @@
     <title>FIGU-Indexer</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-    <link rel="stylesheet" type="text/css" href="css/_custom.css">
-    <link rel="stylesheet" type="text/css" href="css/_main.css">
+    <link rel="stylesheet" type="text/css" href="css/custom.css">
+    <link rel="stylesheet" type="text/css" href="css/main.css">
     <link rel="shortcut icon" href="/favicon_az.ico" />
     <script src="/js/lib/jquery/jquery.min.js"></script>
     <script src="/js/lib/browser/browser.min.js"></script>
