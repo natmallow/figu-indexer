@@ -29,7 +29,7 @@ class Director extends DBConnection
         $action = '';
         $expireDate = date('Y-m-d', strtotime(' + 7 days'));
         $from = 'no-reply@figuarizona.org';
-        $subject = 'Figu Arizona Password Reset';
+        $subject = 'Figu Indexer Password Reset';
         $userName = $fname;
 
 
@@ -46,7 +46,7 @@ class Director extends DBConnection
     public function emailRequestAccess($email, $fname)
     {
         $from = 'no-reply@figuarizona.org';
-        $subject = 'Figu Arizona Access Request Recieved';
+        $subject = 'Figu Indexer Access Request Recieved';
         $userName = $fname;
         $html = confirmRequestAccess($userName);
         $text = 'Access Requested: \n';
@@ -167,7 +167,7 @@ class Director extends DBConnection
         }
 
         try {
-            $mail->setFrom($from, 'Figu Arizona');
+            $mail->setFrom($from, 'Figu Indexer');
             $mail->addAddress($to, $name);
             $mail->Subject = $subject;
             if ($emailcc) {

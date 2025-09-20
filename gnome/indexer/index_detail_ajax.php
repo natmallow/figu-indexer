@@ -66,17 +66,18 @@ if ( $_SERVER[ 'REQUEST_METHOD' ] == 'POST' ) {
         $rsLinkedIndices = $IndicesLink->getLinkedIndex( $id );
 
         $returnHtml = "<ul class='list-group-flat'>";
-        foreach ( $rsLinkedIndices as $row ) {
+        foreach ( $rsLinkedIndices ?: [['index_name'=>'There are no associated indices']] as $row ) {
             
             // Extract values from the associative array
             $index_name = $row[ 'index_name' ];
 
             $returnHtml .= "
-                <li class='list-group-item list-group-item-warning'>
+                <li class='list-group-item list-group-item-success'>
                      $index_name
                 </li>
             ";
         }
+
         echo $returnHtml .=  '</ul>';
         exit();
     }

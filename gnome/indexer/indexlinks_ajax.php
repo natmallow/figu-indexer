@@ -28,19 +28,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $indices_id = filter_var($data['indices_id'] ?? null, FILTER_VALIDATE_INT);
             $pub_type = htmlspecialchars($data['pub_type'] ?? '');
             $AjaxHandler = new AjaxResponseHandler($PublicationIndex);
-            echo $AjaxHandler->run("getIndexPublications", [$indices_id, $pub_type]);
+            echo $AjaxHandler->runAjax("getIndexPublications", [$indices_id, $pub_type])->getResponse();
             exit();
         } elseif ($data['action'] == "get-master-keywords") {
             $indices_id = filter_var($data['indices_id'] ?? null, FILTER_VALIDATE_INT);
             $AjaxHandler = new AjaxResponseHandler($IndicesKeywordService);
-            echo $AjaxHandler->run("getIndicesMasterKeywords", [$indices_id]);
+            echo $AjaxHandler->runAjax("getIndicesMasterKeywords", [$indices_id])->getResponse();
             exit();
         } elseif ($data['action'] == "run-master-keyword-search-sp") {
             // searches can only be run on a single index source.
             $indices_id = filter_var($data['indices_id'] ?? null, FILTER_VALIDATE_INT);
             $publication_ids = $data['publication_ids'];
             $AjaxHandler = new AjaxResponseHandler($IndicesKeywordService);
-            echo $AjaxHandler->run("masterKeywordSearch", [$indices_id, $publication_ids]);
+            echo $AjaxHandler->runAjax("masterKeywordSearch", [$indices_id, $publication_ids])->getResponse();
             exit();
         } elseif ($data['action'] == "run-master-keyword-search-status") {
             // searches can only be run on a single index source.
@@ -48,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $last_checked = $data['last_checked'];
 
             $AjaxHandler = new AjaxResponseHandler($IndicesKeywordService);
-            echo $AjaxHandler->run("masterKeywordSearchStatus", [$indices_id, $last_checked]);
+            echo $AjaxHandler->runAjax("masterKeywordSearchStatus", [$indices_id, $last_checked])->getResponse();
             exit();
         } 
         
@@ -60,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             // Send an immediate response to the client
             $AjaxHandler = new AjaxResponseHandler($IndicesKeywordService);
            
-            echo $AjaxHandler->run("queMasterKeywordSearch", [$indices_id, $publication_ids]);
+            echo $AjaxHandler->runAjax("queMasterKeywordSearch", [$indices_id, $publication_ids])->getResponse();
             // 
             if (ob_get_length()) {
                 ob_flush();
@@ -85,7 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             //     $PubIndexCache->savePublicationIndexCache($indices_id, $publication_ids[$i]);
             // }
         
-// $AjaxHandler->run("masterKeywordSearch", [$indices_id, $publication_ids]);
+// $AjaxHandler->runAjax("masterKeywordSearch", [$indices_id, $publication_ids])->getResponse();
         
             // For Windows, consider logging the command's initiation and follow up manually for the process status.
             if ($environment == 'dev') {

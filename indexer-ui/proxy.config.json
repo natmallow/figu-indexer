@@ -1,0 +1,10 @@
+{
+  "/graphql": {
+    "target": "http://dev.figuindexer.org/gnome/indexer/graphql",
+    "secure": false,
+    "pathRewrite": {
+      "^/graphql": "/graphql/index.php"
+    },
+    "changeOrigin": true
+  }
+}

@@ -3,17 +3,12 @@
     $Publication = new Publication();
 
     $pages = [
-       ["name"=>"sections", "url"=> "/gnome/figuaz/sections.php", "role"=> ["admin", "user"], "icon"=> "bi bi-intersect"],
-       ["name"=>"articles", "url"=> "/gnome/figuaz/articles.php", "role" => ["admin", "user"], "icon"=> "ri-article-fill"],
-       ["name"=>"users", "url"=> "/gnome/figuaz/users.php", "role" => ["admin", "user"], "icon"=> "ri-file-user-line"],
-       ["name"=>"uploads", "url"=> "/gnome/figuaz/uploads.php", "role" => ["admin", "user"], "icon"=> "ri-folder-upload-line"],
-       ["name"=>"templates", "url"=> "/gnome/figuaz/templates.php", "role" => ["admin", "user"], "icon"=> "bi bi-columns"],
-       ["name"=>"emails", "url"=> "/gnome/figuaz/emails.php", "role"  => ["admin", "user"], "icon"=> "bi bi-mailbox"],
-       ["name"=>"virtuals", "url"=> "/gnome/figuaz/virtuals.php", "role"  => ["admin", "user"], "icon"=> "bx bxs-cube"],
-       ["name"=>"indices", "url"=> "/gnome/indexer/indices.php", "role"  => ["indexer_admin", "indexer_user"], "icon"=> "bx bxs-dice-1"],
-       ["name"=>"publication uploader", "url"=> "/gnome/indexer/publications_index.php", "role" => ["indexer_admin", "indexer_user"], "icon"=> "bx bxs-dice-2"],
-       ["name"=>"keywords index", "url"=> "/gnome/indexer/keywords_index.php", "role" => ["indexer_admin", "indexer_user"], "icon"=> "bx bxs-dice-3"]
-    ];
+        ["name"=>"users", "url"=> "/gnome/indexer/users.php", "role" => ["admin", "user"], "icon"=> "ri-file-user-line"],
+        ["name"=>"uploads", "url"=> "/gnome/indexer/uploads.php", "role" => ["admin", "user"], "icon"=> "ri-folder-upload-line"],
+        ["name"=>"indices", "url"=> "/gnome/indexer/indices.php", "role"  => ["indexer_admin", "indexer_user"], "icon"=> "bx bxs-dice-1"],
+        ["name"=>"publication uploader", "url"=> "/gnome/indexer/publications_index.php", "role" => ["indexer_admin", "indexer_user"], "icon"=> "bx bxs-dice-2"],
+        ["name"=>"keywords index", "url"=> "/gnome/indexer/keywords_index.php", "role" => ["indexer_admin", "indexer_user"], "icon"=> "bx bxs-dice-3"]
+     ];
 ?>
 
 

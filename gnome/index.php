@@ -21,7 +21,7 @@ $SECURITY->isLoggedIn();
             <header class="py-3 mb-4 border-bottom">
                 <div class="col-12">
                     <span class="fs-4">
-                        Welcome to FIGU AZ Site Admin </span>
+                        Welcome to FIGU Indexer Admin </span>
                     </span>
                 </div>
             </header>

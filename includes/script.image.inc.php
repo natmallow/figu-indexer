@@ -53,7 +53,7 @@
                 var path = $(event.target).data('dir');
                 fileFolder = path.replace("\\", "\\\\");
                 $.ajax({
-                    url: "/gnome/upload_html.php?folder=" + path + "&back=true",
+                    url: "/../gnome/indexer/upload_html.php?folder=" + path + "&back=true",
                     cache: false,
                     success: function(html) {
                         modalData.empty().append(html).ready(function() {
@@ -97,12 +97,13 @@
                 }
             })
         }
+
         openFolderHandler = function(targetUpdate, handlers) {
             $('.folderDir').on('click', function(event) {
                 var path = $(event.target).data('dir');
                 fileFolder = path.replace("\\", "\\\\");
                 $.ajax({
-                    url: "/gnome/upload_html.php?folder=" + fileFolder,
+                    url: "/../gnome/indexer/upload_html.php?folder=" + fileFolder,
                     cache: false,
                     success: function(html) {
                         modalData.empty().append(html).ready(function() {
@@ -116,9 +117,7 @@
             })
         }
 
-
-        initModal = function(modalNameId, openBtnId, closeBtnId, modalDataContainerId, targetUpdate, handlers = []) {
-
+        initImageModal = function(modalNameId, openBtnId, closeBtnId, modalDataContainerId, targetUpdate, handlers = []) {
 
             var Modal = new bootstrap.Modal(
                 document.getElementById(modalNameId), {
@@ -142,10 +141,10 @@
             // When the user clicks on the button, open the modal
 
             openBtn.on('click', function() {
-                //  $("#container-image").load("/gnome/upload_html.php")
+                //  $("#container-image").load("/gnome/indexer/upload_html.php")
                 // console.log(modal);
                 $.ajax({
-                    url: "/gnome/upload_html.php",
+                    url: "/../gnome/indexer/upload_html.php",
                     cache: false,
                     success: function(html) {
                         modalData.empty().append(html).ready(function() {

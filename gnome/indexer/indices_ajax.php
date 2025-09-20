@@ -5,101 +5,133 @@ $SECURITY->isLoggedIn();
 use gnome\classes\model\Indices;
 use gnome\classes\model\Keyword;
 use gnome\classes\service\IndicesKeywordService;
+use gnome\classes\model\AjaxResponseHandler;
 
 $Indices = new Indices();
-$IndicesKeywordService = new IndicesKeywordService();
 $Keyword = new Keyword();
+$IndicesKeywordService = new IndicesKeywordService();
 
+
+// Only proceed if we received a POST request
 if ( $_SERVER[ 'REQUEST_METHOD' ] == 'POST' ) {
 
-    if ( filter_input( INPUT_POST, 'action' ) == 'add-option' ) {
-        $id = filter_input( INPUT_POST, 'indices_id' );
-        $value = filter_input( INPUT_POST, 'optional_field' );
-        //return $Indices->addIndexOptionalField( $id, $value );
-        echo $Indices->addIndexOptionalField( $id, $value );
+    // 1) Attempt to read JSON input
+    $rawJson = file_get_contents('php://input');
+    $decodedJson = json_decode($rawJson, true);
+
+
+    // 2) If JSON is valid, use it; otherwise use $_POST
+    if (json_last_error() === JSON_ERROR_NONE && is_array($decodedJson)) {
+        $postData = $decodedJson;  // We have valid JSON
+    } else {
+        $postData = $_POST; // Fallback to form-encoded
+    }
+
+    // 3) Extract the shared fields
+    // If something doesn't exist in $postData, use null
+    $action                     = $postData['action']                    ?? null;
+    $indices_id                 = $postData['indices_id']                ?? null;    
+    $user_id                    = $postData['user_id']                   ?? null;    
+    $can_admin                  = $postData['can_admin']                 ?? null;
+    $indicesKeywordMetaId       = $postData['indices_keyword_meta_id']   ?? null;
+    $keyWords                   = $postData['keywords']                  ?? null;
+    $keywordId                  = $postData['keyword_id']                ?? null;
+    $indicesId                  = $postData['indicesId']                 ?? null;
+    $indices_optional_field_id  = $postData['indices_optional_field_id'] ?? null;
+    $optional_field             = $postData['optional_field']            ?? null;
+    $metaValue                  = $postData['meta']                      ?? null;
+
+    // (Optional) For debugging, build an array to output
+    $keywordRtnArr = [
+        'method'   => $_SERVER['REQUEST_METHOD'],
+        'action'   => $action,
+        'postData' => $postData,
+        'success'  => 0
+    ];
+    
+    // set response type here
+    header('Content-Type: application/json; charset=utf-8');
+
+    if ( $action === 'add-option' ) {
+
+        $AjaxHandler = new AjaxResponseHandler($Indices);
+        echo $AjaxHandler->runAjax("addIndexOptionalField", [$indices_id, $optional_field])->getResponse();
         exit();
-    } elseif ( filter_input( INPUT_POST, 'action' ) == 'add-meta' ) {
-        $id = filter_input( INPUT_POST, 'indices_id' );
-        $value = filter_input( INPUT_POST, 'meta' );
-        echo $Indices->addMetaField( $id, $value );
+
+    } elseif ( $action === 'add-meta' ) {
+
+        $AjaxHandler = new AjaxResponseHandler($Indices);
+        echo $AjaxHandler->runAjax("addMetaField", [$indices_id, $metaValue])->getResponse();
         exit();
-    } elseif ( filter_input( INPUT_POST, 'action' ) == 'save-permission' ) {
-        $indices_id = filter_input( INPUT_POST, 'indices_id' );
-        $user_id = filter_input( INPUT_POST, 'user_id' );
+
+    } elseif ( $action === 'save-permission' ) {
+
+        $AjaxHandler = new AjaxResponseHandler($Indices);
         $is_owner = 1;
         $can_read = 1;
         $can_write = 1;
-        $can_admin = filter_input( INPUT_POST, 'can_admin' );
 
-        $Indices->saveIndexPermission( $indices_id, $user_id, $is_owner, $can_read, $can_write, $can_admin);
-        echo json_encode(
-            array(
-                'success' => '1'
-            )
-        );
+        // $Indices->saveIndexPermission( $indices_id, $user_id, $is_owner, $can_read, $can_write, $can_admin);
+        echo $AjaxHandler->runAjax("saveIndexPermission", [$indices_id, $user_id, $is_owner, $can_read, $can_write, $can_admin])->getResponse();
         exit();
 
-    } elseif ( filter_input( INPUT_POST, 'action' ) == 'remove-permission' ) {
-        $indices_id = filter_input( INPUT_POST, 'indices_id' );
-        $user_id = filter_input( INPUT_POST, 'user_id' );
-        $Indices->removeIndexPermission( $indices_id, $user_id );
-        echo json_encode(
-            array(
-                'success' => '1'
-            )
-        );
+    } elseif ( $action === 'remove-permission' ) {
+
+        $AjaxHandler = new AjaxResponseHandler($Indices);
+        echo $AjaxHandler->runAjax("removeIndexPermission", [$indices_id, $user_id])->getResponse();
         exit();
 
-    } elseif ( filter_input( INPUT_POST, 'action' ) == 'delete-meta' ) {
-        $id = filter_input( INPUT_POST, 'indices_keyword_meta_id' );
-        $Indices->deleteMeta( $id );
-        echo json_encode(
-            array(
-                'publication_id'=>"$id",
-            )
-        );
+    } elseif ( $action === 'delete-meta' ) {
 
+        $AjaxHandler = new AjaxResponseHandler($Indices);
+        $response =  $AjaxHandler->runAjax("deleteMeta", [$indicesKeywordMetaId])->getResponse() ;
+        echo $response;
         exit();
-    } elseif ( filter_input( INPUT_POST, 'action' ) == 'edit' ) {
+
+    } elseif ( $action === 'edit' ) {
         // return $Indices->updateIndexOptionalField( $id );
-    } elseif ( filter_input( INPUT_POST, 'action' ) == 'link-keyword' ) {
+    } elseif ( $action === 'link-keyword' ) {
                 
-        $rtnArr = [];
+        $_rtnArr = [];
 
         // remove empty
-        $words = array_filter(explode(',', filter_input(INPUT_POST, 'keywords')));
+        $_words = array_filter(explode(',', $keyWords));
 
         // filter out the words on ignore list
-        $keyWords = $Keyword->checkKeywords($words);
+        $_keyWords = $Keyword->checkKeywords($_words);
 
-        $indices_id = filter_input(INPUT_POST, 'indices_id');
-
-
-        for ($i = 0; $i < count($keyWords); $i++) {
-            $keyWordId = $IndicesKeywordService->linkKeywordToIndex($indices_id, $keyWords[$i])[0];
-            $keyWord = trim($keyWords[$i]);
-            array_push($rtnArr, array("id" => "$keyWordId", "value" => "$keyWord", "metas" => []));
+        for ($i = 0; $i < count($_keyWords); $i++) {
+            $_keyWordId = $IndicesKeywordService->linkKeywordToIndex($indices_id, $_keyWords[$i])[0];
+            $_keyWord = trim($_keyWords[$i]);
+            array_push($_rtnArr, array("id" => "$_keyWordId", "value" => "$_keyWord", "metas" => []));
         }
 
         $keywordRtnArr['indices_id'] = $indices_id;
-        $keywordRtnArr['keywords'] = $rtnArr;
+        $keywordRtnArr['keywords'] = $_rtnArr;
         $keywordRtnArr['success'] = 1;
-        // var_dump($keywordRtnArr);
+
         echo json_encode($keywordRtnArr);
+        exit();
 
-    } elseif ( filter_input( INPUT_POST, 'action' ) == 'unlink-keyword' ) {
-        // return $Indices->updateIndexOptionalField( $id );
-        $indicesId = filter_input(INPUT_POST, 'indicesId');
-        $keyWordId = filter_input(INPUT_POST, 'keyWordId');
+    } elseif ( $action === 'unlink-keyword' ) {
+        
+        $AjaxHandler = new AjaxResponseHandler($IndicesKeywordService);
+        $response =  $AjaxHandler->runAjax("unlinkKeywordToIndex", [$indicesId, $keyWordId])->getResponse(true);
+        echo $response;
+        exit();
 
-        $IndicesKeywordService->unlinkKeywordToIndex($indicesId, $keyWordId);
-        $keywordRtnArr['success'] = 1;
-        echo json_encode($keywordRtnArr);
+    } elseif ( $action === 'delete-index' ) {
 
-    } elseif ( filter_input( INPUT_POST, 'action' ) == 'delete-option' ) {
-        $id = filter_input( INPUT_POST, 'indices_optional_field_id' );
-        $Indices->deleteIndexOptionalField( $id );
-        echo $id ;
+        $AjaxHandler = new AjaxResponseHandler($Indices);
+        $response =  $AjaxHandler->runAjax("deleteIndex", [$indicesId])->getResponse() ;
+        echo $response;
+        exit();
+
+    } elseif ( $action === 'delete-option' ) {
+
+        $AjaxHandler = new AjaxResponseHandler($Indices);
+        $response =  $AjaxHandler->runAjax("deleteIndexOptionalField", [$indices_optional_field_id])->getResponse();
+        echo $response;
         exit();
     }
 }

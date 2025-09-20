@@ -40,7 +40,7 @@ function getPasswordEmail($link, $userName){
                                 </p>
                                 <p>
                                     Solome, <br>
-                                    FIGU AZ
+                                    FIGU Indexer
                                 </p>
                             </div>
                         </div>
@@ -67,7 +67,7 @@ function getPasswordEmail($link, $userName){
  */
 function confirmRequestAccess($userName){
     return '<html><head>
-        <title>Access to Figu Arizona</title>
+        <title>Access to Figu Indexer</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>         
@@ -93,7 +93,7 @@ function confirmRequestAccess($userName){
                                 </p>
                                 <p>
                                     Solome, <br>
-                                    FIGU AZ
+                                    FIGU Indexer
                                 </p>
                             </div>
                         </div>

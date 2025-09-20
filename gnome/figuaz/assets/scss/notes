@@ -1,2 +1,0 @@
--- these are commands for sass compiler 
-sass --watch gnome/assets/scss:gnome/assets/css

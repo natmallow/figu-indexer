@@ -48,12 +48,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <meta charset="utf-8">
     <title>Request Access</title>
     <?php include __DIR__ . '/includes/head.inc.php'; ?>
-    <!-- <script src="../assets/js/lib/jquery/jquery.min.js"></script>
-    <script src="../assets/js/lib/browser/browser.min.js"></script>
-    <script src="../assets/js/lib/breakpoints/breakpoints.min.js"></script>
-    <script src="../assets/js/util.js"></script>
-    <link rel="stylesheet" type="text/css" href="../css/custom.css">
-    <link rel="stylesheet" type="text/css" href="../css/main.css"> -->
 </head>
 
 <body class="bg-light">
@@ -61,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <div class="row justify-content-center mt-5">
 
             <header id="header" class="col-12 text-center">
-                <h1>Request Access to FIGU AZ</h1>
+                <h1>Request Access to FIGU Indexer</h1>
                 <a href="login" class="d-block mb-3"><strong>Back to login</strong></a>
             </header>
             <section class="row">
@@ -122,7 +116,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                     <div class="mb-3">
                                         <label for="phone" class="form-label">Reason for Request:</label>
                                         <select name="reason" class="form-select">
-                                            <option value="Access to figu az">Access to figu az</option>
                                             <option value="Access to Indexer">Access to Indexer</option>
                                             <option value="Access to figu members">Access to figu members</option>
                                         </select>
