@@ -145,8 +145,9 @@ function returnStrToCss(){
  */
 function fnSortUniqueTracks($trackStr = ""): string
 {
+
     // Split the string into an array
-    $tracks = explode(',', $trackStr);
+    $tracks = explode(',', $trackStr ?? '');
 
     // Remove any empty array values
     $tracks = array_filter($tracks);

@@ -2,7 +2,7 @@
 
 # SetEnv HTTP_ENVIRONMENT "dev"
 # Loads the autoloader script before executing main PHP file
-php_value auto_prepend_file C:/xampp/htdocs/figu-indexer/autoload.php
+php_value auto_prepend_file /xampp/htdocs/figu-indexer/autoload.php
 # figu carolina
 #php_value auto_prepend_file /var/www/html/autoload.php
 
@@ -10,13 +10,15 @@ php_value auto_prepend_file C:/xampp/htdocs/figu-indexer/autoload.php
 php_flag display_startup_errors on
 php_flag display_errors on
 php_flag html_errors on
+php_flag short_open_tag on
+
 
 # php_flag error_reporting 2039
 
 RewriteEngine On 
 RewriteCond %{HTTPS} off 
-RewriteCond %{dev.figuarizona.org} off 
-RewriteRule (.*) https://www.figuarizona.org%{REQUEST_URI}
+RewriteCond %{dev.figuindexer.org} off 
+RewriteRule (.*) https://www.figuindexer.org%{REQUEST_URI}
 
 #
 #RewriteCond %{SERVER_PORT} 443
@@ -36,3 +38,10 @@ RewriteRule ^$ /en/ [L,R=301]
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteRule ^(en|es)/?$ index.php?lang=$1 [QSA,NC,L]
+
+# -----------------------------
+# API host mapping (dev only)
+# Only applies on devapi.figuindexer.org
+# -----------------------------
+RewriteCond %{HTTP_HOST} ^devapi\.figuindexer\.org$ [NC]
+RewriteRule ^indexer/(publication|user) gnome/indexer/graphql/index.php [L,QSA]

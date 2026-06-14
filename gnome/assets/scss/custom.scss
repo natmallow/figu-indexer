@@ -22,18 +22,14 @@ $not-found: rgb(224, 190, 255);
 *********************************************/
 
 .list-group-flat {
-  /* border: 1px solid #000; */
   padding: 10px;
-  /* width: 240px; */
   height: 210px;
-  /* float: left; */
   margin-right: 10px;
   list-style-type: none;
   overflow-y: auto;
   overflow-x: hidden;
   background-color: #d9fde3;
   .list-group-item {
-    // padding: 10px;
     margin-bottom: 5px;
     border: 1px solid #ddd;
     background-color: #f9f9f9;
@@ -50,7 +46,6 @@ $not-found: rgb(224, 190, 255);
   width: 100%;
   min-width: 240px;
   height: 240px;
-  // float: left;
   margin-right: 10px;
   list-style-type: none;
   overflow-y: auto;
@@ -314,7 +309,10 @@ $not-found: rgb(224, 190, 255);
   &.card-header {
     color: rgb(54, 54, 54);
     background-color: rgb(201, 225, 255);
-    padding: 6px 0px 5px 5px;
+    padding: 0px 0px;
+    & .save-btn, & .detach-btn {
+      margin:3px;
+    }
   }
 }
 
@@ -332,9 +330,10 @@ $not-found: rgb(224, 190, 255);
 .sticky-sub {
   position: sticky;
   top: 60px;
-  z-index: 5;
-  max-height: 25vh;
-  overflow-y: auto;
+  // height: 226px;
+  // overflow-y: hidden;
+     height: auto !important; /* Forces the box to size itself to the content */
+    max-height: none !important; /* Erases any restrictive maximum heights */
 }
 
 .dropdown-menu {
@@ -407,6 +406,28 @@ tr {
     // font-weight: bold;
   }
 }
+
+.btn-change-indexer {
+    --bs-btn-padding-y: 0;
+    --bs-btn-padding-x: 0.25rem;
+    --bs-btn-font-size: 0.86rem;
+    border-radius: 3px;
+    &.dropdown-toggle::after {
+      margin-left: 0;
+    }
+
+}
+
+.index-summary {
+  font-size: 0.9rem;
+  color: #FF00FF;
+  margin: 0 4px;
+  cursor: pointer;
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
 
 
 /********************************************

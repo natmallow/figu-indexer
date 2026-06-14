@@ -1,0 +1,4 @@
+run local server
+cd gnome/indexer/graphql/
+http-server [path] [options]
+http-server ./ -p 8080 -c-1
