@@ -480,9 +480,10 @@ class PublicationIndex extends DBConnection
     }
 
 
+    // maybe problem with the IGNORE for refresh 
     private function addKeywordLinks($publication_index_id, $wordLinks = [])
     {
-        $sql = "INSERT INTO publication_indices_keyword_meta_link (publication_index_id, publication_keyword_id)
+        $sql = "INSERT IGNORE INTO publication_indices_keyword_meta_link (publication_index_id, publication_keyword_id)
                 VALUES (:publication_index_id, :publication_keyword_id)";
         $stmt = $this->dbc->prepare($sql);
         foreach ($wordLinks as $value) {

@@ -91,7 +91,7 @@ function sanitize($data)
     return $data;
 }
 
-
+// values match with db look up from table publication_status_lookup
 function strToCss($value = 'not-started')
 {
     switch (strtolower($value)) {

@@ -232,6 +232,12 @@ h6 {
   padding: 15px 0px 0px 0px;
 }
 
+// .card-footer {
+//   &.--bg {
+//     background-color:  rgba(207, 227, 255, 1);
+//   }
+// }
+
 .card-title {
   padding: 20px 0 15px 0;
   font-size: 18px;
@@ -250,6 +256,10 @@ h6 {
   padding: 0 20px 20px 20px;
   &.--sm {
     padding: 0px 10px;
+  }
+  &.--tab {
+    padding: 6px 10px 6px 10px;
+    background: linear-gradient(180deg,rgba(255, 255, 255, 1) calc(100% - 55px), rgb(139, 209, 255) 55px);
   }
 }
 
@@ -606,7 +616,7 @@ h6 {
   left: 0;
   bottom: 0;
   width: 300px;
-  z-index: 996;
+  z-index: 1021;
   transition: all 0.3s;
   padding: 20px;
   overflow-y: auto;

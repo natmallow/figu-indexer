@@ -418,6 +418,8 @@ tr {
 
 }
 
+
+
 .index-summary {
   font-size: 0.9rem;
   color: #FF00FF;
@@ -426,6 +428,11 @@ tr {
   &:hover {
     text-decoration: underline;
   }
+}
+
+.wide-popover {
+  --bs-popover-max-width: 402px; /* Adjust this value as needed */
+  max-width: 402px; /* Ensure the popover does not exceed this width */
 }
 
 
