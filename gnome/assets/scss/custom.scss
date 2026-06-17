@@ -327,6 +327,12 @@ $not-found: rgb(224, 190, 255);
   }
 }
 
+#keywordChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
 .sticky-sub {
   position: sticky;
   top: 60px;
