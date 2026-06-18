@@ -58,7 +58,18 @@ extract($indexHtmlRs);
 // Select Statements:
 $publication = $Publication->getPublication($publication_id);
 $optionalFieldsAns = $Indices->getOptionalFieldsWithAnswer($indices_id, $publication_id);
+
+
+
+
+// need to add master keyword list to keyword list
 $publicationIndex = (object) $PublicationIndex->getIndexPublication($indices_id, $publication_id);
+
+
+
+
+
+
 $keywordsMeta = $PublicationIndex->getIndexKeywordMeta($indices_id);
 $listOfIndicies = $Indices->fetchIndices();
 
@@ -302,7 +313,7 @@ if (!is_null($pub_type)) {
                                     </span>
                                     <ul class="dropdown-menu">
                                         <li class="form-check">
-                                            <input type="checkbox" class="form-check-input" id="showMeta" checked onchange='showMetaHandler(this);'>
+                                            <input type="checkbox" class="form-check-input" id="showMeta" onchange='showMetaHandler(this);'>
                                             <label class="form-check-label" for="showMeta">
                                                 Show Meta
                                             </label>
@@ -338,15 +349,15 @@ if (!is_null($pub_type)) {
                                             <div id="masterKeywordsContainer">
                                                 <div id="masterKeywordList">
                                                     <?php
-                                                    $mKeyWords = $IndicesKeywordService->getIndicesMasterKeywords($indices_id);
-                                                    $mKeyWords = is_null($mKeyWords) ? [] : $mKeyWords;
+                                                        $mKeyWords = $IndicesKeywordService->getIndicesMasterKeywords($indices_id);
+                                                        $mKeyWords = is_null($mKeyWords) ? [] : $mKeyWords;
 
-                                                    $keywordsArray = [];
-                                                    foreach ($mKeyWords as $word) {
-                                                        $keywordsArray[] = $word['value'];
-                                                    }
-                                                    sort($keywordsArray);
-                                                    echo implode(', ', $keywordsArray);
+                                                        $keywordsArray = [];
+                                                        foreach ($mKeyWords as $word) {
+                                                            $keywordsArray[] = $word['value'];
+                                                        }
+                                                        sort($keywordsArray);
+                                                        echo implode(', ', $keywordsArray);
                                                     ?>
                                                 </div>
                                             </div>
@@ -371,6 +382,10 @@ if (!is_null($pub_type)) {
                                     <div id="keywordChips">
                                         <!----    keywords as chips    --->
                                         <?php
+
+// var_dump($publicationIndex->keywords);
+
+
                                         $keyWords = is_null($publicationIndex->keywords) ? [] : $publicationIndex->keywords;
 
                                         foreach ($keyWords as $word) :
@@ -413,10 +428,36 @@ if (!is_null($pub_type)) {
                                     </div>
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
                                     <!-- textarea for keywords json for debugging -->
                                     <div id="keywordTextarea">
                                         <textarea name="" id="keywordBlock" class="form-control collapse"><?= trim(json_encode($publicationIndex->keywords)) ?></textarea>
                                     </div>
+
+
+
+
+
+
+
+
+
+
+
+
                                 </div>
                             </fieldset>
                         </div>
@@ -773,6 +814,16 @@ if (!is_null($pub_type)) {
             _removeKeyword(event) {
                 // const word = event.target.dataset.word;
                 const wordId = event.target.dataset.keywordId;
+                // check if keyword is locked
+                const isLocked = document.getElementById('keywordBlock').value
+                    ? JSON.parse(document.getElementById('keywordBlock').value).find(word => word.id == wordId)?.locked
+                    : false;
+
+                if (isLocked) {
+                    alert("This keyword is part of the master keyword list and cannot be removed here.");
+                    return;
+                }
+
                 this.runRemoveKeyword(publicationIndexId, wordId)
             }
 
@@ -1334,18 +1385,20 @@ if (!is_null($pub_type)) {
         };
 
         const openMetaUI = (e) => {
-            // console.log(e)
+             console.log(e)
             const selectedMetas = e.target.dataset.selectedMeta.split(',');
             const metaContainer = document.getElementById('meta-checkboxes');
             const metaCheckboxes = metaContainer.getElementsByTagName("input");
 
-            // get scroll offset
-            const scrollPosMetaContainer = document.querySelector('#dragable_modal .modal-body');
+            // get scroll offset ??? if we ever want to add the drag modal back
+            // const scrollPosMetaContainer = document.querySelector('#dragable_modal .modal-body');
 
             // move to correct position
             let pos = getAbsPosition(e.target);
-            metaContainer.style.top = `${pos.y + scrollPosMetaContainer.scrollTop}px`;
+            // metaContainer.style.top = `${pos.y + scrollPosMetaContainer.scrollTop}px`;
+            metaContainer.style.top = `${pos.y}px`;            
             metaContainer.style.left = `${pos.x}px`;
+            metaContainer.style.zIndex = 1000;
             metaContainer.dataset.keywordId = e.target.dataset.keywordId;
 
             // reset all check boxes
@@ -1424,7 +1477,7 @@ if (!is_null($pub_type)) {
                 mode: 'open'
             });
             node.setAttribute('id', 'spinnerSpan')
-            document.querySelector(`#${location}`).prepend(node);
+            document.querySelector(`#${location}`)?.prepend(node);
 
             shadow.innerHTML = ` 
                             <link rel="stylesheet" type="text/css" href="/css/bootstrap/bootstrap.min.css">
@@ -1561,6 +1614,8 @@ if (!is_null($pub_type)) {
             tracksHighlighter();
             // set initial dropdown color
             updateDropdownColor();
+            // turn off meta view by default
+            showMetaHandler(document.getElementById('showMeta'));
         }
         init();
     </script>

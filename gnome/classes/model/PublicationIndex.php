@@ -82,8 +82,232 @@ class PublicationIndex extends DBConnection
         return $text;
     }
 
-    
-    function getIndexPublication($index_id, $publication_id)
+
+
+    public function getIndexPublication(int $index_id, string $publication_id): array
+    {
+        /**
+         * Existing workaround for MySQL ONLY_FULL_GROUP_BY.
+         *
+         * Prefer correcting all aggregate queries so this session override
+         * can eventually be removed.
+         */
+        $stmt = $this->dbc->prepare("SET SESSION sql_mode = ''");
+        $stmt->execute();
+
+        /**
+         * Prevent GROUP_CONCAT from truncating large keyword/meta JSON results.
+         */
+        $stmt = $this->dbc->prepare(
+            'SET SESSION group_concat_max_len = @@max_allowed_packet'
+        );
+        $stmt->execute();
+
+        $sql = "SELECT
+            PI.publication_index_status,
+            PI.publication_index_id,
+            PI.summary,
+            PI.notes,
+            PI.tracks,
+            COALESCE(
+                CONCAT(
+                    '[',
+                    GROUP_CONCAT(
+                        DISTINCT JSON_OBJECT(
+                            'id',
+                            K.publication_keyword_id,
+
+                            'locked',
+                            K.is_master_keyword,
+
+                            'value',
+                            K.keyword,
+
+                            'metas',
+                            COALESCE(
+                                JSON_EXTRACT(KM.metas, '$'),
+                                JSON_ARRAY()
+                            )
+                        )
+                        ORDER BY K.keyword
+                        SEPARATOR ','
+                    ),
+                    ']'
+                ),
+                JSON_ARRAY()
+            ) AS keywords
+        FROM publication_index PI
+
+        LEFT JOIN (
+            SELECT DISTINCT
+                keyword_source.publication_index_id,
+                PK.publication_keyword_id,
+                PK.keyword,
+                CASE
+                    WHEN IMLKL.publication_keyword_id IS NOT NULL
+                    THEN TRUE
+                    ELSE FALSE
+                END AS is_master_keyword
+            FROM (
+                /*
+                 * Keywords assigned directly to the publication index.
+                 */
+                SELECT DISTINCT
+                    PML.publication_index_id,
+                    PML.publication_keyword_id
+                FROM publication_indices_keyword_meta_link PML
+
+                UNION
+
+                /*
+                 * Master keywords available to the index.
+                 *
+                 * UNION, rather than UNION ALL, prevents a keyword ID
+                 * from being repeated when it exists in both sources.
+                 */
+                SELECT DISTINCT
+                    PI2.publication_index_id,
+                    IMLKL2.publication_keyword_id
+                FROM publication_index PI2
+                INNER JOIN indices_master_list_keyword_link IMLKL2
+                    ON IMLKL2.indices_id = PI2.indices_id
+            ) keyword_source
+
+            INNER JOIN publication_index PI3
+                ON PI3.publication_index_id =
+                   keyword_source.publication_index_id
+
+            INNER JOIN publication_keyword PK
+                ON PK.publication_keyword_id =
+                   keyword_source.publication_keyword_id
+
+            LEFT JOIN indices_master_list_keyword_link IMLKL
+                ON IMLKL.publication_keyword_id =
+                   keyword_source.publication_keyword_id
+               AND IMLKL.indices_id = PI3.indices_id
+        ) K
+            ON K.publication_index_id = PI.publication_index_id
+
+        LEFT JOIN (
+            /*
+             * Aggregate metadata separately so each keyword is returned once,
+             * regardless of how many metadata records it has.
+             */
+            SELECT
+                PML.publication_index_id,
+                PML.publication_keyword_id,
+                CONCAT(
+                    '[',
+                    GROUP_CONCAT(
+                        DISTINCT JSON_OBJECT(
+                            'value',
+                            IKM.meta,
+
+                            'id',
+                            IKM.indices_keyword_meta_id
+                        )
+                        ORDER BY IKM.indices_keyword_meta_id
+                        SEPARATOR ','
+                    ),
+                    ']'
+                ) AS metas
+            FROM publication_indices_keyword_meta_link PML
+
+            INNER JOIN indices_keyword_meta IKM
+                ON IKM.indices_keyword_meta_id =
+                   PML.indices_keyword_meta_id
+
+            GROUP BY
+                PML.publication_index_id,
+                PML.publication_keyword_id
+        ) KM
+            ON KM.publication_index_id = PI.publication_index_id
+           AND KM.publication_keyword_id =
+               K.publication_keyword_id
+
+        WHERE PI.publication_id = :publication_id
+          AND PI.indices_id = :indices_id
+
+        GROUP BY
+            PI.publication_index_status,
+            PI.publication_index_id,
+            PI.summary,
+            PI.notes,
+            PI.tracks
+    ";
+
+        $stmt = $this->dbc->prepare($sql);
+
+        $stmt->execute([
+            ':publication_id' => $publication_id,
+            ':indices_id' => $index_id,
+        ]);
+
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($result === false) {
+            return [];
+        }
+
+        $keywordsJson = $result['keywords'] ?? '[]';
+        $keywords = json_decode($keywordsJson);
+
+        if (json_last_error() !== JSON_ERROR_NONE || !is_array($keywords)) {
+            $keywords = [];
+        }
+
+        foreach ($keywords as $keyword) {
+            if (!is_object($keyword)) {
+                continue;
+            }
+
+            /*
+         * Defensive support for output such as:
+         *
+         * "metas": "[]"
+         *
+         * The corrected SQL should return:
+         *
+         * "metas": []
+         */
+            if (isset($keyword->metas) && is_string($keyword->metas)) {
+                $decodedMetas = json_decode($keyword->metas);
+
+                $keyword->metas = (
+                    json_last_error() === JSON_ERROR_NONE &&
+                    is_array($decodedMetas)
+                )
+                    ? $decodedMetas
+                    : [];
+            }
+
+            if (!isset($keyword->metas) || !is_array($keyword->metas)) {
+                $keyword->metas = [];
+                continue;
+            }
+
+            /*
+         * Remove metadata records with missing or null IDs.
+         */
+            $keyword->metas = array_values(
+                array_filter(
+                    $keyword->metas,
+                    static function ($meta): bool {
+                        return is_object($meta)
+                            && isset($meta->id)
+                            && $meta->id !== null;
+                    }
+                )
+            );
+        }
+
+        $result['keywords'] = $keywords;
+
+        return $result;
+    }
+
+
+    function REMOVEgetIndexPublication($index_id, $publication_id)
     {
 
         /**
@@ -148,6 +372,17 @@ class PublicationIndex extends DBConnection
                 GROUP BY keyword
                 ) 
             formatjson;";
+
+
+
+
+
+
+
+
+
+
+
 
         $stmt = $this->dbc->prepare($sql);
 
@@ -378,7 +613,7 @@ class PublicationIndex extends DBConnection
     }
 
 
-    function addMissingIndexPublication($indices_id, $publication_id, $publication_index_status = 'Not Started', $notes='', $tracks='', $summary='')
+    function addMissingIndexPublication($indices_id, $publication_id, $publication_index_status = 'Not Started', $notes = '', $tracks = '', $summary = '')
     {
         try {
             // First, check if the record exists
@@ -387,17 +622,17 @@ class PublicationIndex extends DBConnection
             $checkStmt = $this->dbc->prepare($checkSql);
             $params = [':indices_id' => $indices_id, ':publication_id' => $publication_id];
             $checkStmt->execute($params);
-            
-            error_log("addMissingIndexPublication => ". $this->showquery( $checkSql, $params ). "\n");            
-      // echo $this->showquery( $sql, $params );
-        // exit();
+
+            error_log("addMissingIndexPublication => " . $this->showquery($checkSql, $params) . "\n");
+            // echo $this->showquery( $sql, $params );
+            // exit();
 
 
             if (!$checkStmt->fetch()) {
                 // If record does not exist, insert it
                 $insertSql = "INSERT INTO publication_index (indices_id, publication_id, publication_index_status, notes, tracks, summary) 
                               VALUES (:indices_id, :publication_id, :publication_index_status, :notes, :tracks, :summary)";
-    
+
                 $insertStmt = $this->dbc->prepare($insertSql);
                 $insertStmt->execute([
                     ':indices_id' => $indices_id,
@@ -407,10 +642,9 @@ class PublicationIndex extends DBConnection
                     ':tracks' => $tracks,
                     ':summary' => $summary
                 ]);
-    
+
                 return $this->dbc->lastInsertId();
             }
-
         } catch (\PDOException $e) {
             error_log('Error executing saveIndexPublication: ' . $e->getMessage());
             return null;
@@ -453,18 +687,18 @@ class PublicationIndex extends DBConnection
                 publication_index_status = :publication_index_status
                 WHERE publication_id = :publication_id 
                 AND indices_id = :indices_id";
-    
+
         $params = [
             ':publication_id' => $publication_id,
             ':indices_id' => $indices_id,
             ':publication_index_status' => $publication_index_status
         ];
-    
+
         $stmt = $this->dbc->prepare($sql);
         // echo $this->showquery( $sql, $params );
         // exit();
         $stmt->execute($params);
-    
+
         return $this->dbc->lastInsertId();
     }
 
@@ -543,14 +777,10 @@ class PublicationIndex extends DBConnection
     }
 
 
-    function makePublication($id)
-    {
-    }
+    function makePublication($id) {}
 
 
-    function deletePublication($id)
-    {
-    }
+    function deletePublication($id) {}
 
 
     function updatePublication()
