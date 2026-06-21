@@ -12,29 +12,74 @@ class Indices extends DBConnection
 
     protected $table = 'indices';
 
-    function getIndices()
+    public function getIndices()
     {
+        $filterAlpha = trim(
+            (string) ($_GET['filter_alpha'] ?? '')
+        );
 
-        $condition  =  "";
-        $count = $this->getCount();
+        $whereParts = ['1 = 1'];
+        $params = [];
 
-        $sql = "SELECT indices_id,
-                name,
-                description_html,
-                highlight_color,
-                text_color,
-                created_by,
-                CONCAT(U.name_first, ' ', U.name_last) as ownerName
-                FROM {$this->table} I INNER JOIN
-                user U on I.created_by = U.username 
-                WHERE 1 " . $condition . " ORDER BY name ASC";
+        if ($filterAlpha !== '') {
+            $whereParts[] = 'I.name LIKE :filter_alpha';
+            $params['filter_alpha'] = '%' . $filterAlpha . '%';
+        }
 
+        $whereSql = implode(' AND ', $whereParts);
 
-        $pages = new Paginator($count, 1);
+        /*
+     * The count uses the same filter as the result query.
+     */
+        $countSql = "SELECT COUNT(*) AS count
+        FROM {$this->table} I
+        INNER JOIN user U
+            ON I.created_by = U.username
+        WHERE {$whereSql}
+    ";
 
-        // $sql .= $this->paginate();
-        $limit  = ' LIMIT ' . $pages->limit_start . ',' . $pages->limit_end;
-        $response = $this->getQuery($sql . $limit)->fetchAll();
+        $countStatement = $this->getPreparedQuery(
+            $countSql,
+            $params
+        );
+
+        $count = $countStatement !== false
+            ? (int) $countStatement->fetchColumn()
+            : 0;
+
+        $pages = new \gnome\classes\Paginator(
+            $count,
+            7
+        );
+
+        $sql = "SELECT
+            I.indices_id,
+            I.name,
+            I.description_html,
+            I.highlight_color,
+            I.text_color,
+            I.created_by,
+            CONCAT(
+                U.name_first,
+                ' ',
+                U.name_last
+            ) AS ownerName
+        FROM {$this->table} I
+        INNER JOIN user U
+            ON I.created_by = U.username
+        WHERE {$whereSql}
+        ORDER BY I.name ASC
+        LIMIT {$pages->limit_start}, {$pages->limit_end}
+    ";
+
+        $statement = $this->getPreparedQuery(
+            $sql,
+            $params
+        );
+
+        $response = $statement !== false
+            ? $statement->fetchAll()
+            : [];
 
         return [$response, $pages];
     }
@@ -528,7 +573,6 @@ class Indices extends DBConnection
         // return $this->dbc->lastInsertId();
 
         return ['success' => 1, 'message' => 'Optional data added successfully.', 'indices_optional_field_id' => $this->dbc->lastInsertId()];
-
     }
 
     function makeIndex($id) {}
@@ -542,10 +586,10 @@ class Indices extends DBConnection
     {
         // 1) Make sure PDO throws on any SQL error
         $this->dbc->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
-    
+
         // 2) Start the transaction
         $this->dbc->beginTransaction();
-    
+
         try {
             // 3) Map of tables → columns to delete by
             $deleteMap = [
@@ -556,11 +600,11 @@ class Indices extends DBConnection
                 'publication_index_cache'                   => ['indices_id'],
                 'publication_indices_keyword_meta_link'     => ['publication_index_id'],
                 'indices_master_list_keyword_link'          => ['indices_id'],
-                'indicies_master_keyword_publication_status'=> ['indices_id'],
+                'indicies_master_keyword_publication_status' => ['indices_id'],
                 'publication_keyword_search_queue'          => ['indices_id'],
                 'indices_link'                              => ['indices_id', 'indices_group_id'],
             ];
-    
+
             foreach ($deleteMap as $table => $columns) {
                 foreach ($columns as $column) {
                     $sql  = "DELETE FROM `$table` WHERE `$column` = :id";
@@ -569,28 +613,27 @@ class Indices extends DBConnection
                     // no rowCount check here—0 rows is fine for these tables
                 }
             }
-    
+
             // 4) Finally, delete the main index row (this one *must* succeed)
             $sqlMain  = "DELETE FROM `indices` WHERE `indices_id` = :id";
             $stmtMain = $this->dbc->prepare($sqlMain);
             $stmtMain->execute([':id' => $id]);
-    
+
             if ($stmtMain->rowCount() < 1) {
                 throw new \RuntimeException("Main index not found or already deleted.");
             }
-    
+
             // 5) All good—commit & return success
             $this->dbc->commit();
             return [
                 'success' => 1,
                 'message' => 'Index deleted successfully.'
             ];
-    
         } catch (\Throwable $e) {
             // Something went wrong—roll back and return a JSON-friendly error
             $this->dbc->rollBack();
             error_log("deleteIndex() failed: " . $e->getMessage());
-    
+
             return [
                 'success' => 0,
                 'message' => 'Failed to delete index: ' . $e->getMessage()

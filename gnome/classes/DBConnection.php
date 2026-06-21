@@ -2,239 +2,470 @@
 
 namespace gnome\classes;
 
-
-
-/*
- * Class DBConnection
- * Create a database connection using PDO
- * @author jonahlyn@unm.edu
- *
- * Instructions for use:
- *
- * require_once('settings.config.php');          // Define db configuration arrays here
- * require_once('DBConnection.php');             // Include this file
- *
- * $database = new DBConnection($dbconfig);      // Create new connection by passing in your configuration array
- *
- * $sqlSelect = "select * from .....";           // Select Statements:
- * $rows = $database->getQuery($sqlSelect);      // Use this method to run select statements
- *
- * foreach($rows as $row){
- * 		echo $row["column"] . "<br/>";
- * }
- *
- * $sqlInsert = "insert into ....";              // Insert/Update/Delete Statements:
- * $count = $database->runQuery($sqlInsert);     // Use this method to run inserts/updates/deletes
- * echo "number of records inserted: " . $count;
- *
- * $name = "jonahlyn";                          // Prepared Statements:
- * $stmt = $database->dbc->prepare("insert into test (name) values (?)");
- * $stmt->execute(array($name));
- *
- */
-
 use PDO;
 use PDOException;
 
+/**
+ * Creates and manages the application's PDO database connection.
+ */
 class DBConnection
 {
-
-    // Database Connection Configuration Parameters
-    // array('driver' => 'mysql','host' => '','dbname' => '','username' => '','password' => '')
+    /**
+     * Database connection configuration.
+     *
+     * @var array<string, mixed>
+     */
     protected $_config;
 
-    // Database Connection
+    /**
+     * Active PDO connection.
+     *
+     * @var PDO|null
+     */
     public $dbc;
 
-    // pagination
+    /**
+     * Pagination LIMIT clause.
+     *
+     * @var string
+     */
     public $limit;
 
-    // rows per page
+    /**
+     * Rows displayed per page.
+     *
+     * @var int
+     */
     public $rowsPrePage = 10;
 
-    // Singleton Database Connection
+    /**
+     * Singleton database connection.
+     *
+     * Keep this untyped because child classes such as Security
+     * redeclare the property.
+     *
+     * @var DBConnection|null
+     */
     protected static $instance = null;
 
-    /* function __construct
-     * Opens the database connection
-     * @param $config is an array of database connection parameters
+    /**
+     * Opens the database connection.
      */
     public function __construct()
     {
-        $this->limit = "";
-        $env = $_SERVER['HTTP_ENVIRONMENT'];
-        $config = require(__DIR__ . '/../../includes/crystal/settings.config.php');
-        $this->_config = $config['connections']['mysql'][$env];
+        $this->limit = '';
+
+        $environment = $_SERVER['HTTP_ENVIRONMENT']
+            ?? getenv('HTTP_ENVIRONMENT')
+            ?: null;
+
+        if ($environment === null) {
+            throw new \RuntimeException(
+                'HTTP_ENVIRONMENT is not configured.'
+            );
+        }
+
+        $configPath = __DIR__
+            . '/../../includes/crystal/settings.config.php';
+
+        if (!is_file($configPath)) {
+            throw new \RuntimeException(
+                "Database configuration file not found: {$configPath}"
+            );
+        }
+
+        $config = require $configPath;
+
+        if (!isset($config['connections']['mysql'][$environment])) {
+            throw new \RuntimeException(
+                "Database configuration not found for environment: {$environment}"
+            );
+        }
+
+        $this->_config = $config['connections']['mysql'][$environment];
+
         $this->getPDOConnection();
     }
 
+    /**
+     * Returns the singleton DBConnection instance.
+     */
     public static function instance()
     {
-        if (is_null(self::$instance)) {
+        if (self::$instance === null) {
             self::$instance = new DBConnection();
         }
+
         return self::$instance;
     }
 
-    /* Function __destruct
-     * Closes the database connection
+    /**
+     * Closes the database connection.
      */
     public function __destruct()
     {
-        $this->dbc = NULL;
+        $this->dbc = null;
     }
 
-    /* Function getPDOConnection
-     * Get a connection to the database using PDO.
+    /**
+     * Opens the PDO database connection.
      */
     private function getPDOConnection()
     {
-        // Check if the connection is already established
-        if ($this->dbc == NULL) {
-            // Create the connection
-            $dsn = "" .
-                $this->_config['driver'] .
-                ":host=" . $this->_config['host'] .
-                ";dbname=" . $this->_config['database'] .
-                ';charset=utf8mb4' .
-                ";port=" . $this->_config['port'];
+        if ($this->dbc !== null) {
+            return;
+        }
 
-            try {
-                $this->dbc = new \PDO($dsn, $this->_config['username'], $this->_config['password']);
-            } catch (PDOException $e) {
-                echo __LINE__ . $e->getMessage();
-            }
+        $dsn = $this->_config['driver']
+            . ':host=' . $this->_config['host']
+            . ';dbname=' . $this->_config['database']
+            . ';charset=utf8mb4'
+            . ';port=' . $this->_config['port'];
 
-            $this->dbc->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_WARNING);
+        try {
+            $this->dbc = new PDO(
+                $dsn,
+                $this->_config['username'],
+                $this->_config['password']
+            );
+
+            /*
+             * Preserve the application's previous error behavior.
+             * This avoids changing every existing model query.
+             */
+            $this->dbc->setAttribute(
+                PDO::ATTR_ERRMODE,
+                PDO::ERRMODE_WARNING
+            );
+
+            $this->dbc->setAttribute(
+                PDO::ATTR_DEFAULT_FETCH_MODE,
+                PDO::FETCH_ASSOC
+            );
+        } catch (PDOException $exception) {
+            throw new \RuntimeException(
+                'Unable to connect to the database: '
+                . $exception->getMessage(),
+                (int) $exception->getCode(),
+                $exception
+            );
         }
     }
 
-
+    /**
+     * Returns the last inserted ID.
+     */
     public function lastInsertId()
     {
         return $this->dbc->lastInsertId();
     }
 
-    /* Function runQuery
-     * Runs a insert, update or delete query
-     * @param string sql insert update or delete statement
-     * @return int count of records affected by running the sql statement.
+    /**
+     * Runs an INSERT, UPDATE, or DELETE query.
+     *
+     * This retains compatibility with existing calls that pass raw SQL.
      */
     public function runQuery($sql)
     {
         try {
-            $count = $this->dbc->exec($sql) or print_r($this->dbc->errorInfo());
-        } catch (\PDOException $e) {
-            echo __LINE__ . $e->getMessage();
+            $count = $this->dbc->exec($sql);
+
+            if ($count === false) {
+                print_r($this->dbc->errorInfo());
+
+                return 0;
+            }
+
+            return $count;
+        } catch (PDOException $exception) {
+            echo __LINE__ . $exception->getMessage();
+
+            return 0;
         }
-        return $count;
     }
 
-    /* Function getQuery
-     * Runs a select query
-     * @param string sql insert update or delete statement
-     * @returns associative array
+    /**
+     * Runs an existing non-parameterized SELECT query.
+     *
+     * This intentionally retains the original PDO::query() behavior so
+     * existing models such as User.php are not changed globally.
+     *
+     * @return \PDOStatement|false
      */
     public function getQuery($sql)
     {
+        $statement = $this->dbc->query($sql);
 
-        $stmt = $this->dbc->query($sql);
-        $stmt->setFetchMode(PDO::FETCH_ASSOC);
+        if ($statement === false) {
+            return false;
+        }
 
-        return $stmt;
+        $statement->setFetchMode(PDO::FETCH_ASSOC);
+
+        return $statement;
     }
 
     /**
-     * Show the sql statement
+     * Runs a parameterized SELECT query.
+     *
+     * Use this only for queries that contain placeholders.
+     *
+     * Named parameter example:
+     *
+     * $sql = 'SELECT * FROM indices WHERE name LIKE :filter_alpha';
+     *
+     * $params = [
+     *     'filter_alpha' => '%value%',
+     * ];
+     *
+     * @param array<int|string, mixed> $params
+     * @return \PDOStatement|false
+     */
+    public function getPreparedQuery($sql, array $params = [])
+    {
+        $statement = $this->dbc->prepare($sql);
+
+        if ($statement === false) {
+            print_r($this->dbc->errorInfo());
+
+            return false;
+        }
+
+        /*
+         * PDO accepts named parameter keys with or without the colon,
+         * but normalizing them avoids inconsistencies between callers.
+         */
+        $normalizedParams = [];
+
+        foreach ($params as $key => $value) {
+            if (is_int($key)) {
+                $normalizedParams[$key] = $value;
+                continue;
+            }
+
+            $normalizedParams[ltrim($key, ':')] = $value;
+        }
+
+        $executed = $statement->execute($normalizedParams);
+
+        if (!$executed) {
+            print_r($statement->errorInfo());
+
+            return false;
+        }
+
+        $statement->setFetchMode(PDO::FETCH_ASSOC);
+
+        return $statement;
+    }
+
+    /**
+     * Runs a parameterized INSERT, UPDATE, or DELETE query.
+     *
+     * @param array<int|string, mixed> $params
+     */
+    public function runPreparedQuery($sql, array $params = [])
+    {
+        $statement = $this->dbc->prepare($sql);
+
+        if ($statement === false) {
+            print_r($this->dbc->errorInfo());
+
+            return 0;
+        }
+
+        $normalizedParams = [];
+
+        foreach ($params as $key => $value) {
+            if (is_int($key)) {
+                $normalizedParams[$key] = $value;
+                continue;
+            }
+
+            $normalizedParams[ltrim($key, ':')] = $value;
+        }
+
+        if (!$statement->execute($normalizedParams)) {
+            print_r($statement->errorInfo());
+
+            return 0;
+        }
+
+        return $statement->rowCount();
+    }
+
+    /**
+     * Displays an SQL statement with values substituted for debugging.
+     *
+     * This method must not be used to execute SQL.
+     *
+     * @param array<int|string, mixed> $data
      */
     public function showquery($string, $data)
     {
-        $indexed = $data == array_values($data);
-        foreach ($data as $k => $v) {
-            if (is_string($v)) $v = "'$v'";
-            if ($indexed) $string = preg_replace('/\?/', $v, $string, 1);
-            else $string = str_replace("$k", $v, $string);
-            // var_dump()
+        $indexed = $data === array_values($data);
+
+        foreach ($data as $key => $value) {
+            if ($value === null) {
+                $formattedValue = 'NULL';
+            } elseif (is_bool($value)) {
+                $formattedValue = $value ? '1' : '0';
+            } elseif (is_string($value)) {
+                $formattedValue = $this->dbc->quote($value);
+            } else {
+                $formattedValue = (string) $value;
+            }
+
+            if ($indexed) {
+                $string = preg_replace(
+                    '/\?/',
+                    $formattedValue,
+                    $string,
+                    1
+                );
+
+                continue;
+            }
+
+            $placeholder = str_starts_with((string) $key, ':')
+                ? (string) $key
+                : ':' . $key;
+
+            $string = str_replace(
+                $placeholder,
+                $formattedValue,
+                $string
+            );
         }
+
         return $string;
     }
 
-    protected function getCount($tableOveride = null, $condition = null)
-    {
-
-        // this is not a problem gets inherited
+    /**
+     * Returns the number of records from a table.
+     *
+     * Retained for compatibility with existing model inheritance.
+     */
+    protected function getCount(
+        $tableOveride = null,
+        $condition = null
+    ) {
         $table = $this->table;
 
-        if (!is_null($tableOveride)) {
+        if ($tableOveride !== null) {
             $table = $tableOveride;
         }
 
-        if (is_null($condition)) {
+        if ($condition === null) {
             $condition = 1;
         }
 
-        $sql = "SELECT COUNT(*) as count
-                FROM {$table} 
-                WHERE $condition";
+        $sql = "
+            SELECT COUNT(*) AS count
+            FROM {$table}
+            WHERE {$condition}
+        ";
 
-        return $this->getQuery($sql)->fetch()["count"];
+        $statement = $this->getQuery($sql);
+
+        if ($statement === false) {
+            return 0;
+        }
+
+        return (int) $statement->fetchColumn();
     }
 
     /**
-     * USage:
-     * $count = $this->getCount('your_table', ['column_name' => 'value']);
+     * Returns the number of matching records using equality conditions.
+     *
+     * Example:
+     *
+     * $count = $this->getCountPDO(
+     *     'your_table',
+     *     ['column_name' => 'value']
+     * );
+     *
+     * @param array<string, mixed> $conditions
      */
-    public function getCountPDO($tableOverride = null, array $conditions = [])
-    {
-
+    public function getCountPDO(
+        $tableOverride = null,
+        array $conditions = []
+    ) {
         $table = $this->table;
 
-        if (!is_null($tableOverride)) {
+        if ($tableOverride !== null) {
             $table = $tableOverride;
         }
 
-        // Constructing the WHERE clause with bound parameters
-        $whereClause = '1'; // Default condition (always true)
+        $whereParts = [];
         $params = [];
-        if (!empty($conditions)) {
-            $whereParts = [];
-            foreach ($conditions as $column => $value) {
-                $whereParts[] = "$column = :$column";
-                $params[":$column"] = $value;
+
+        foreach ($conditions as $column => $value) {
+            /*
+             * Column and table names cannot be bound with PDO.
+             * Permit only simple SQL identifiers.
+             */
+            if (
+                !preg_match(
+                    '/^[A-Za-z_][A-Za-z0-9_.]*$/',
+                    $column
+                )
+            ) {
+                throw new \InvalidArgumentException(
+                    "Invalid database column: {$column}"
+                );
             }
-            $whereClause = implode(' AND ', $whereParts);
+
+            $parameterName = str_replace('.', '_', $column);
+
+            $whereParts[] = "{$column} = :{$parameterName}";
+            $params[$parameterName] = $value;
         }
 
-        $sql = "SELECT COUNT(*) as count FROM {$table} WHERE {$whereClause}";
+        $whereClause = $whereParts
+            ? implode(' AND ', $whereParts)
+            : '1 = 1';
 
-        // Prepare and execute the query with bound parameters
-        $stmt = $this->dbc->prepare($sql);
-        $stmt->execute($params);
-        return $stmt->fetchColumn();
+        $sql = "
+            SELECT COUNT(*) AS count
+            FROM {$table}
+            WHERE {$whereClause}
+        ";
+
+        $statement = $this->getPreparedQuery($sql, $params);
+
+        if ($statement === false) {
+            return 0;
+        }
+
+        return (int) $statement->fetchColumn();
     }
 
-
-
     /**
-     * attaches pagination to call
+     * Builds a LIMIT clause for the legacy pagination implementation.
      */
     public function paginate()
     {
+        $requestedPage = $_POST['page']
+            ?? $_GET['page']
+            ?? null;
 
-        $limit = "";
-        $page = 1;
-
-        if (!empty($_POST["page"]) || !empty($_GET["page"])) {
-            $page = !empty($_POST["page"]) ? filter_input(INPUT_POST, 'page') : filter_input(INPUT_GET, 'page');
-            $start = ($page - 1) * $this->rowsPrePage;
-            $limit = " LIMIT $page, $start ";
+        if ($requestedPage === null) {
+            return '';
         }
 
-        return $limit;
+        $page = max(1, (int) $requestedPage);
+        $offset = ($page - 1) * $this->rowsPrePage;
+
+        return sprintf(
+            ' LIMIT %d, %d ',
+            $offset,
+            $this->rowsPrePage
+        );
     }
 
     /**
-     * response msg
+     * Stores a response message in the session.
      */
     public function msg($message)
     {

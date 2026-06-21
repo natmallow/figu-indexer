@@ -29,13 +29,16 @@ class Paginator
 
 
 
-	public function __construct($total = 0, $mid_range = 7, $ipp_array = array(10, 25, 50, 100, "All"))
+	public function __construct($total = 0, $mid_range = 7, $ipp_array = [10, 25, 50, 100, "All"])
 	{
 
-		$this->total_items = (int)$total;
+		$this->total_items = max(0, (int) $total);
+		$this->querystring = '';
+		$this->return = '';
 
 		// Midrange validation
-		$this->mid_range = (int)$mid_range;
+		$this->mid_range = (int) $mid_range;
+
 		if ($this->mid_range % 2 == 0 || $this->mid_range < 1) {
 			exit("Invalid mid_range value (must be an odd integer >= 1)");
 		}
@@ -47,18 +50,25 @@ class Paginator
 
 		$this->ipp_array = $ipp_array;
 		$this->default_ipp = $this->ipp_array[0];
-		$this->items_per_page = (isset($_GET["ipp"])) ? $_GET["ipp"] : $this->default_ipp;
+
+		$requestedIpp = $_GET['ipp'] ?? $this->default_ipp;
+
+		$this->items_per_page = in_array($requestedIpp, $this->ipp_array, true)
+			? $requestedIpp
+			: $this->default_ipp;
 
 		// Compute num_pages based on items_per_page
-		$this->num_pages = ($this->items_per_page == "All") ?
-			1 : ceil($this->total_items / $this->items_per_page);
+		$this->num_pages = $this->items_per_page === 'All'
+			? 1
+			: max(1, (int) ceil(
+				$this->total_items / (int) $this->items_per_page
+			));
 
-		$this->current_page = (isset($_GET["page"])) ? (int)$_GET["page"] : 1;
+		$requestedPage = max(1, (int) ($_GET['page'] ?? 1));
 
-		// Build the querystring without the page or ipp parameters
+		$this->current_page = min($requestedPage, $this->num_pages);
+
 		$this->buildQuerystring();
-
-		// Construct the pagination display
 		$this->paginate();
 	}
 
@@ -86,85 +96,92 @@ class Paginator
 	protected function paginate()
 	{
 		if ($this->num_pages > 10) {
-			$this->return = ($this->current_page > 1 && $this->total_items >= 10) 
+			$this->return = ($this->current_page > 1 && $this->total_items >= 10)
 				? "<li class=\"page-item\"><a class=\"page-link\" href=\"$_SERVER[PHP_SELF]?page=" . ($this->current_page - 1) . "&ipp=$this->items_per_page$this->querystring\">Previous</a></li>"
 				: "<li class=\"page-item disabled\"><span class=\"page-link\">Previous</span></li>";
-	
+
 			$this->start_range = $this->current_page - floor($this->mid_range / 2);
 			$this->end_range = $this->current_page + floor($this->mid_range / 2);
-	
+
 			if ($this->start_range <= 0) {
 				$this->end_range += abs($this->start_range) + 1;
 				$this->start_range = 1;
 			}
-	
+
 			if ($this->end_range > $this->num_pages) {
 				$this->start_range -= $this->end_range - $this->num_pages;
 				$this->end_range = $this->num_pages;
 			}
-			
+
 			$this->range = range($this->start_range, $this->end_range);
-	
+
 			for ($i = 1; $i <= $this->num_pages; $i++) {
 				if ($this->range[0] > 2 && $i == $this->range[0]) {
 					$this->return .= "<li class=\"page-item disabled\"><span class=\"page-link\">...</span></li>";
 				}
-	
+
 				if ($i == 1 || $i == $this->num_pages || in_array($i, $this->range)) {
-					$this->return .= ($i == $this->current_page && $this->items_per_page != "All") 
+					$this->return .= ($i == $this->current_page && $this->items_per_page != "All")
 						? "<li class=\"page-item active\"><span class=\"page-link\">$i</span></li>"
 						: "<li class=\"page-item\"><a class=\"page-link\" href=\"$_SERVER[PHP_SELF]?page=$i&ipp=$this->items_per_page$this->querystring\">$i</a></li>";
 				}
-	
+
 				if ($this->range[$this->mid_range - 1] < $this->num_pages - 1 && $i == $this->range[$this->mid_range - 1]) {
 					$this->return .= "<li class=\"page-item disabled\"><span class=\"page-link\">...</span></li>";
 				}
 			}
-			
-			$this->return .= (($this->current_page < $this->num_pages && $this->total_items >= 10) && ($this->items_per_page != "All") && $this->current_page > 0) 
+
+			$this->return .= (($this->current_page < $this->num_pages && $this->total_items >= 10) && ($this->items_per_page != "All") && $this->current_page > 0)
 				? "<li class=\"page-item\"><a class=\"page-link\" href=\"$_SERVER[PHP_SELF]?page=" . ($this->current_page + 1) . "&ipp=$this->items_per_page$this->querystring\">Next</a></li>"
 				: "<li class=\"page-item disabled\"><span class=\"page-link\">Next</span></li>";
-			
-			$this->return .= ($this->items_per_page == "All") 
+
+			$this->return .= ($this->items_per_page == "All")
 				? "<li class=\"page-item active\"><span class=\"page-link\">All</span></li>"
 				: "<li class=\"page-item\"><a class=\"page-link\" href=\"$_SERVER[PHP_SELF]?page=1&ipp=All$this->querystring\">All</a></li>";
-			
 		} else {
 			for ($i = 1; $i <= $this->num_pages; $i++) {
-				$this->return .= ($i == $this->current_page) 
+				$this->return .= ($i == $this->current_page)
 					? "<li class=\"page-item active\"><span class=\"page-link\">$i</span></li>"
 					: "<li class=\"page-item\"><a class=\"page-link\" href=\"$_SERVER[PHP_SELF]?page=$i&ipp=$this->items_per_page$this->querystring\">$i</a></li>";
 			}
-			
+
 			$this->return .= "<li class=\"page-item\"><a class=\"page-link\" href=\"$_SERVER[PHP_SELF]?page=1&ipp=All$this->querystring\">All</a></li>";
 		}
-	
-		$this->return = "<ul class=\"pagination\">" . str_replace("&", "&amp;", $this->return) . "</ul>";
-		$this->limit_start = ($this->current_page <= 0) ? 0 : ($this->current_page - 1) * (int) $this->items_per_page;
-	
-		if ($this->current_page <= 0) {
-			$this->items_per_page = 0;
+
+		$this->return = '<ul class="pagination">'
+			. str_replace('&', '&amp;', $this->return)
+			. '</ul>';
+
+		if ($this->items_per_page === 'All') {
+			$this->limit_start = 0;
+			$this->limit_end = $this->total_items;
+		} else {
+			$this->limit_end = (int) $this->items_per_page;
+			$this->limit_start = ($this->current_page - 1) * $this->limit_end;
 		}
-	
-		$this->limit_end = ($this->items_per_page == "All") ? (int)$this->total_items : (int)$this->items_per_page;
 	}
-	
+
+	function getPaginationFilters()
+	{
+		return $this->querystring;
+	}
 
 	// drop down
 	protected function display_items_per_page()
 	{
 		$items = '';
-		$ipp_array = array(10, 25, 50, 100, 'All');
+		$ipp_array = [10, 25, 50, 100, 'All'];
 		foreach ($ipp_array as $ipp_opt) {
-			$items .= ($ipp_opt == $this->items_per_page) 
+			$items .= ($ipp_opt == $this->items_per_page)
 				? "<option selected value=\"$ipp_opt\">$ipp_opt</option>"
 				: "<option value=\"$ipp_opt\">$ipp_opt</option>";
 		}
-	
-		return '<span class="me-3">Items per page: </span><select class="form-select form-select-sm me-3 --wfc" onchange="window.location=\''. $_SERVER['PHP_SELF'] . '?page=1&ipp=\'+this[this.selectedIndex].value+\''. $this->querystring .'\'">' . $items . '</select>';
+
+		return '<span class="me-3">Items per page: </span><select class="form-select form-select-sm me-3 --wfc" onchange="window.location=\'' . $_SERVER['PHP_SELF'] . '?page=1&ipp=\'+this[this.selectedIndex].value+\'' . $this->querystring . '\'">' . $items . '</select>';
 	}
-	
-	public function display_pagination() {
+
+	public function display_pagination()
+	{
 		return '<div class="d-flex align-items-center">' . $this->display_jump_menu() . $this->display_items_per_page() . $this->return . '</div>';
 	}
 
@@ -173,14 +190,14 @@ class Paginator
 	{
 		$option = '';
 		for ($i = 1; $i <= $this->num_pages; $i++) {
-			$option .= ($i == $this->current_page) 
-				? "<option value=\"$i\" selected>$i</option>" 
+			$option .= ($i == $this->current_page)
+				? "<option value=\"$i\" selected>$i</option>"
 				: "<option value=\"$i\">$i</option>";
 		}
-	
-		return '<span class="me-3">Page: </span><select class="form-select form-select-sm me-3 --wfc" onchange="window.location=\''. $_SERVER['PHP_SELF'] . '?page=\'+this[this.selectedIndex].value+\'&ipp='. $this->items_per_page . $this->querystring .'\'">' . $option . '</select>';
+
+		return '<span class="me-3">Page: </span><select class="form-select form-select-sm me-3 --wfc" onchange="window.location=\'' . $_SERVER['PHP_SELF'] . '?page=\'+this[this.selectedIndex].value+\'&ipp=' . $this->items_per_page . $this->querystring . '\'">' . $option . '</select>';
 	}
-	
+
 
 	public function display_pages()
 	{

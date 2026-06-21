@@ -98,20 +98,25 @@ list($indices, $paginator) = $Indices->getIndices();
 
                 <div class="col">
                     <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="searchBy" id="inlineRadio1" value="title">
+                        <input class="form-check-input" type="radio" name="searchBy" <?= !isset($_GET['filter_keytype']) || $_GET['filter_keytype'] == 'title' ? 'checked' : '' ?> id="inlineRadio1" value="title">
                         <label class="form-check-label" for="inlineRadio1">Title</label>
                     </div>
                     <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="searchBy" id="inlineRadio2" value="author">
+                        <input class="form-check-input" type="radio" name="searchBy" <?= isset($_GET['filter_keytype']) && $_GET['filter_keytype'] == 'keyword' ? 'checked' : '' ?> id="inlineRadio2" value="keyword">
                         <label class="form-check-label" for="inlineRadio2">Keyword</label>
                     </div>
                     <div class="input-group mb-3">
-                        <input type="text" class="form-control" id="word_search" placeholder="Index search">
+                        <!-- autocomplete="off" -->
+                        <input type="text" class="form-control" id="word_search" placeholder="Index search"
+                        value="<?= isset($_GET['filter_alpha']) ? $_GET['filter_alpha'] : '' ?>"
+                        onkeypress="if(event.key === 'Enter'){ wordSearchHandler(); }"
+                        >
                         <div class="input-group-append">
                             <a id="submitSearch" class="btn btn-outline-secondary m-0">Search</a>
                         </div>
                     </div>
                 </div>
+
             </div>
             <div class="row">
                 <?php foreach ($indices as $index => $row) : ?>
@@ -135,7 +140,9 @@ list($indices, $paginator) = $Indices->getIndices();
 
                                     <div class="container">
                                         <div class="text-container" id="textContainer<?= $index ?>">
+
                                             <?= $row["description_html"] ?>
+
                                         </div>
                                         <div class="d-flex justify-content-end">
                                             <button class="btn btn-link btn-sm d-none" onclick="toggleText(<?= $index ?>)" id="readMoreButton<?= $index ?>">Read More</button>
@@ -276,6 +283,7 @@ list($indices, $paginator) = $Indices->getIndices();
             }
         </script>
     <?php endif ?>
+    
     <script>
         function toggleText(index) {
             var textContainer = document.getElementById("textContainer" + index);
@@ -290,18 +298,46 @@ list($indices, $paginator) = $Indices->getIndices();
             }
         }
 
+
+
+
+
+
+
+
+
         // Function to initially check the height of each text container
         function checkContentHeight() {
             var containers = document.querySelectorAll('.text-container');
             containers.forEach((container, index) => {
                 var button = document.getElementById("readMoreButton" + index);
+console.log('scrollHeight', container.scrollHeight, 'offsetHeight', container.offsetHeight);
                 if (container.scrollHeight > container.offsetHeight) {
                     // If content height is more than container height, show the button
                     button.classList.remove('d-none');
                 }
             });
         }
+
         checkContentHeight();
+
+
+
+        function wordSearchHandler() {
+            let wordSearch = document.getElementById('word_search').value;
+            let filterKeyType = document.querySelector('input[name="searchBy"]:checked').value;
+
+            if (!wordSearch.trim()) {
+                console.log('yes I am in');
+                // return alert('please enter search word');
+            }
+
+            // location.search = `<?= $paginator->getPaginationFilters(); ?>&filter_alpha=${wordSearch}&filter_keytype=${filterKeyType}`
+            location.search = `&filter_alpha=${wordSearch}&filter_keytype=${filterKeyType}`
+
+        }
+
+        document.querySelector("#submitSearch").addEventListener("click", wordSearchHandler);
 
         // Run the check after the page has loaded
     </script>
