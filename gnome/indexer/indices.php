@@ -102,7 +102,7 @@ list($indices, $paginator) = $Indices->getIndices();
                         <label class="form-check-label" for="inlineRadio1">Title</label>
                     </div>
                     <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="searchBy" <?= isset($_GET['filter_keytype']) && $_GET['filter_keytype'] == 'keyword' ? 'checked' : '' ?> id="inlineRadio2" value="keyword">
+                        <input class="form-check-input" disabled type="radio" name="searchBy" <?= isset($_GET['filter_keytype']) && $_GET['filter_keytype'] == 'keyword' ? 'checked' : '' ?> id="inlineRadio2" value="keyword">
                         <label class="form-check-label" for="inlineRadio2">Keyword</label>
                     </div>
                     <div class="input-group mb-3">
@@ -112,7 +112,8 @@ list($indices, $paginator) = $Indices->getIndices();
                         onkeypress="if(event.key === 'Enter'){ wordSearchHandler(); }"
                         >
                         <div class="input-group-append">
-                            <a id="submitSearch" class="btn btn-outline-secondary m-0">Search</a>
+                            <button id="submitSearch" class="btn btn-outline-secondary" type="button">Search</button>
+                            <a href="/gnome/indexer/indices.php?lang=en" class="btn btn-warning" type="button"><i class="bi bi-arrow-clockwise"></i></a>
                         </div>
                     </div>
                 </div>

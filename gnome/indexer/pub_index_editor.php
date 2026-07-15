@@ -81,6 +81,7 @@ if (!is_null($pub_type)) {
     $publicationType = $Publication->getPublicationType($pub_type);
     $publicationName = $publicationType['name'];
     $publicationAbbr = $publicationType['abbreviation'];
+    $listOfpublications = $Publication->getPublicationIds($pub_type);
 }
 
 ?>
@@ -194,7 +195,30 @@ if (!is_null($pub_type)) {
                         <a href="/gnome/indexer/indexlinks.php?index_id=<?= $indices_id; ?>&lang=<?= lang(); ?>&pub_type=<?= $pub_type; ?>"><?= $publicationName; ?> (<?= $publicationAbbr; ?>)</a>
                     </li>
                     <li class="breadcrumb-item active">
+
                         Editing (<?= $publication_id; ?>)
+
+                          <div class="btn-group">
+                            <button id="btnChangPub"
+                                class="btn btn-light btn-sm dropdown-toggle btn-change-indexer"
+                                type="button"
+                                data-bs-toggle="dropdown"
+                                data-bs-popper-config='{"strategy":"fixed"}'
+                                aria-expanded="false">
+                            </button>
+
+                            <ul class="dropdown-menu" aria-labelledby="btnChangPub" style="z-index: 1060;">
+                                <?php foreach ($listOfpublications as $key => $value) : ?>
+                                    <li>
+                                        <a class="dropdown-item" data-value="<?= $value['publication_id'] ?>" 
+                                        href="/gnome/indexer/pub_index_editor.php?publication_id=<?= $value['publication_id'] ?>&index_id=<?=$indices_id; ?>&pub_type=<?= $pub_type ?>">
+                                            <?= $value['publication_id'] ?>
+                                        </a>
+                                    </li>
+                                <?php endforeach; ?>
+                            </ul>
+                        </div>
+
                     </li>
                 </ol>
             </nav>
@@ -502,8 +526,19 @@ if (!is_null($pub_type)) {
                                     name="publication_status" 
                                     id="publication_status" 
                                     onchange="updateDropdownColor()">
+                                <?php 
+                                    if (empty($publicationIndex->publication_index_status)) {
+                                        $selectStatus = 'Not started';
+                                    } else {
+                                        $selectStatus = $publicationIndex->publication_index_status;
+                                    } 
+                                ?>
+                                        
                                 <?php foreach ($statusLookup as $row) : ?>
-                                    <option class="<?=strToCss($row["publication_status_lookup"]) ?>" value="<?= $row["publication_status_lookup"] ?>" <?= $row["publication_status_lookup"] == $publicationIndex->publication_index_status ? 'selected' : '' ?>>
+                                    <option 
+                                        class="<?=strToCss($row["publication_status_lookup"]) ?>" 
+                                        value="<?= $row["publication_status_lookup"] ?>" 
+                                        <?= $row["publication_status_lookup"] == $selectStatus ? 'selected' : '' ?>>
                                         <?= $row["publication_status_lookup"] ?>
                                     </option>
                                 <?php endforeach; ?>

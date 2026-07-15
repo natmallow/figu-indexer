@@ -35,6 +35,13 @@ class Publication extends DBConnection
         return $response;
     }
 
+    function getPublicationIds($publicationTypeId) {
+        $sql = "SELECT publication_id FROM {$this->table} WHERE publication_type_id = :publication_type_id";
+        $pdoc = $this->dbc->prepare($sql);
+        $pdoc->execute([':publication_type_id' => $publicationTypeId]);
+        return $pdoc->fetchAll();
+    }
+
     function getPublication($id)
     {
         $sql = "SELECT publication_id,
