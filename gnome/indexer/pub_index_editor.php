@@ -11,12 +11,22 @@ use gnome\classes\service\IndicesKeywordService;
 
 // require_once(__DIR__ . '/../includes/crystal/functions.php');
 
+
+
+
+
 $lang = lang();
 
 $PublicationIndex = new PublicationIndex();
 $Publication = new Publication();
 $Indices = new Indices();
 $IndicesKeywordService = new IndicesKeywordService();
+
+
+
+
+
+
 
 $publication_id =
     $german =
@@ -39,6 +49,14 @@ $publication_id =
 $indices_id = filter_input(INPUT_GET, 'index_id') ? filter_input(INPUT_GET, 'index_id') : "";
 $publication_id = filter_input(INPUT_GET, 'publication_id') ? filter_input(INPUT_GET, 'publication_id') : "";
 $pub_type = filter_input(INPUT_GET, 'pub_type') ? filter_input(INPUT_GET, 'pub_type') : null;
+
+// var_dump($_SESSION);
+// var_dump($Indices->canUserAccess($indices_id, $_SESSION['username']));
+
+
+
+
+
 
 if ($indices_id === "" || $publication_id === "") {
     $_SESSION['actionResponse'] = "Either Publication or Index was not selected, Try again";
@@ -179,14 +197,18 @@ if (!is_null($pub_type)) {
                                 aria-expanded="false">
                             </button>
 
-                            <ul class="dropdown-menu" aria-labelledby="btnChangIndexer" style="z-index: 1060;">
-                                <?php foreach ($listOfIndicies as $key => $value) : ?>
-                                    <li>
-                                        <a class="dropdown-item" data-value="<?= $value['indices_id'] ?>" href="?publication_id=<?= $publication_id ?>&index_id=<?= $value['indices_id'] ?>&pub_type=<?= $pub_type ?>">
-                                            <?= $value['name'] ?>
-                                        </a>
-                                    </li>
-                                <?php endforeach; ?>
+                            <ul class="dropdown-menu p-2" aria-labelledby="btnChangIndexer" style="z-index: 1060;">
+                                <input type="input" class="form-control mb-2" id="indexIds" placeholder="Filter indices..." >
+                                
+                                <div id="indexIdsDropdown" style="max-height: 300px; overflow-y: auto;">
+                                    <?php foreach ($listOfIndicies as $key => $value) : ?>
+                                        <li>
+                                            <a class="dropdown-item" data-value="<?= $value['indices_id'] ?>" href="?publication_id=<?= $publication_id ?>&index_id=<?= $value['indices_id'] ?>&pub_type=<?= $pub_type ?>">
+                                                <?= $value['name'] ?>
+                                            </a>
+                                        </li>
+                                    <?php endforeach; ?>
+                                </div>
                             </ul>
                         </div>
 
@@ -207,8 +229,13 @@ if (!is_null($pub_type)) {
                                 aria-expanded="false">
                             </button>
 
-                            <ul class="dropdown-menu" aria-labelledby="btnChangPub" style="z-index: 1060;">
+                            <ul class="dropdown-menu p-2"  aria-labelledby="btnChangPub" style="z-index: 1060;">
+                                <input type="input" class="form-control mb-2" id="publicationIds" placeholder="Filter publications..." >
+                               
+                                <div id="publicationIdsDropdown" style="max-height: 300px; overflow-y: auto;">
                                 <?php foreach ($listOfpublications as $key => $value) : ?>
+                                <?php if ($value['publication_id'] === $publication_id) continue; // Skip the current publication ?>
+
                                     <li>
                                         <a class="dropdown-item" data-value="<?= $value['publication_id'] ?>" 
                                         href="/gnome/indexer/pub_index_editor.php?publication_id=<?= $value['publication_id'] ?>&index_id=<?=$indices_id; ?>&pub_type=<?= $pub_type ?>">
@@ -216,6 +243,7 @@ if (!is_null($pub_type)) {
                                         </a>
                                     </li>
                                 <?php endforeach; ?>
+                                </div>
                             </ul>
                         </div>
 
@@ -225,331 +253,336 @@ if (!is_null($pub_type)) {
         </div><!-- End Page Title -->
 
         <section class="section">
-            <div class="card sticky-sub" id="stickySub" style="z-index: 1020;"> 
-                <div class="nat card-header pb-0">
-                    <!-- Fixed tabs: Changed 'data-toggle' to 'data-bs-toggle' -->
-                    <ul class="nav nav-tabs custom_tab_on_editor border-bottom-0" id="myTab" role="tablist">
-                        <li class="nav-item" role="presentation">
-                            <a class="nav-link active" id="main-tab" data-toggle="tab" href="#row_seetings_main_tab" role="tab" aria-controls="main" aria-selected="true">Main</a>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <a class="nav-link" id="keywords-tab" data-toggle="tab" href="#keywords_tab" role="tab" aria-controls="keywords" aria-selected="false">Keywords</a>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <a class="nav-link" id="questions-tab" data-toggle="tab" href="#questions_tab" role="tab" aria-controls="questions" aria-selected="false">Yes or No</a>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <a class="nav-link" id="notes-tab" data-toggle="tab" href="#notes_tab" role="tab" aria-controls="notes" aria-selected="false">Notes</a>
-                        </li>
-                        <li class="nav-item ms-auto" role="presentation">
-                            <!-- detach button -->
-                            <!-- <button class="btn btn-primary detach-btn" id="edit_row_btn" data-bs-toggle="tooltip" title="Detach Control Panel">
-                                <i class="ri-arrow-right-up-fill"></i>
-                            </button> -->
-                        </li>
-                    </ul>
 
-                </div>
+                <?php if (hasAccessWith($Indices->canUserAccess($indices_id, $_SESSION['username']), ['can_write','can_admin', 'is_owner', 'admin', 'super_admin'])) :?>
+                    <div class="card sticky-sub" id="stickySub" style="z-index: 1020;"> 
+                        <div class="nat card-header pb-0">
+                            <!-- Fixed tabs: Changed 'data-toggle' to 'data-bs-toggle' -->
+                            <ul class="nav nav-tabs custom_tab_on_editor border-bottom-0" id="myTab" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <a class="nav-link active" id="main-tab" data-toggle="tab" href="#row_seetings_main_tab" role="tab" aria-controls="main" aria-selected="true">Main</a>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <a class="nav-link" id="keywords-tab" data-toggle="tab" href="#keywords_tab" role="tab" aria-controls="keywords" aria-selected="false">Keywords</a>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <a class="nav-link" id="questions-tab" data-toggle="tab" href="#questions_tab" role="tab" aria-controls="questions" aria-selected="false">Yes or No</a>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <a class="nav-link" id="notes-tab" data-toggle="tab" href="#notes_tab" role="tab" aria-controls="notes" aria-selected="false">Notes</a>
+                                </li>
+                                <li class="nav-item ms-auto" role="presentation">
+                                    <!-- detach button -->
+                                    <!-- <button class="btn btn-primary detach-btn" id="edit_row_btn" data-bs-toggle="tooltip" title="Detach Control Panel">
+                                        <i class="ri-arrow-right-up-fill"></i>
+                                    </button> -->
+                                </li>
+                            </ul>
 
-                <div class="card-body --tab">
-                    <div class="tab-content" id="myTabContent">     
-
-                        <!-- TRACKS PANNEL -->
-                        <div class="tab-pane fade show active" id="row_seetings_main_tab" role="tabpanel" aria-labelledby="main-tab">
-                            <div class="row mb-1">
-                                <div class="col-7">
-                                    <div class="mb-2">
-                                        <label for="edit_project_name" class="form-label">
-                                        <i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" title="Summary is a reference to the index and the publication and not to the publication ONLY"></i>
-                                        Summary</label>
-                                        <textarea name="" id="summary" class="form-control"><?= trim($publicationIndex->summary ?? '') ?></textarea>
-                                    </div>
-                                    <div class="mb-2">
-
-                                        <label for="edit_project_name" class="form-label">
-                                        <i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" title="AKA Tracks"></i>
-                                        Sentences
-                                        </label>
-                                        <textarea name="" id="track" class="form-control" disabled="disabled"><?= trim($publicationIndex->tracks ?? '') ?></textarea>
-                                    </div>
-                                </div>
-                                <div class="col-5">
-                                    <div class="alert alert-primary" role="alert">
-                                        <div class="form-check form-switch">
-                                            <input class="form-check-input" type="checkbox" id="toggle-visability">
-                                            <label class="form-check-label" for="toggle-visability">Show tracks<span id="toggle-visability-tag"> - off</span></label>
-                                        </div>
-                                    </div>
-                                    <div class="alert alert-primary" role="alert">
-                                        <div class="form-check form-check-inline">
-                                            <input class="form-check-input" type="checkbox" id="tracks-show" value="showSelectedTracks" onchange="tracksHighlighter(this.checked)" checked="checked">
-                                            <label class="form-check-label" for="tracks-show">Show Selected Tracks</label>
-                                        </div>
-                                        <div class="form-check form-check-inline">
-                                            <input class="form-check-input" type="checkbox" id="keywords-show" value="showSelectedKeywords" onchange="Highlighter.toggleVisibility(this.checked)" checked="checked">
-                                            <label class="form-check-label" for="keywords-show">Show Selected Keywords</label>
-                                        </div>
-                                    </div>
-                                    <div class="alert alert-primary" role="alert">
-                                        <div class="form-check form-check-inline">
-                                            <input class="form-check-input" type="radio" id="select-keywords-radio" name="activeState" value="selectOff" checked="checked">
-                                            <label class="form-check-label" for="select-keywords-radio">Select Off</label>
-                                        </div>
-                                        <div class="form-check form-check-inline">
-                                            <input class="form-check-input" type="radio" id="select-tracks-radio" name="activeState" value="selectTracks">
-                                            <label class="form-check-label" for="select-tracks-radio">Select Track</label>
-                                        </div>
-                                        <div class="form-check form-check-inline">
-                                            <input class="form-check-input" type="radio" id="select-keywords-radio-2" name="activeState" value="selectKeywords">
-                                            <label class="form-check-label" for="select-keywords-radio-2">Select keywords</label>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
 
 
-   
+                        <div class="card-body --tab">
+                            <div class="tab-content" id="myTabContent">     
 
-                        <!-- KEYWORDS PANNEL -->
-                        <div class="tab-pane fade keywords-tab" id="keywords_tab" role="tabpanel" aria-labelledby="keywords-tab">
-                            <div class="row mb-1 sticky-sub-nav"><!-- sticky sub nab stays on screen for RS items -->
-                                <div class="col-md-6 gap-2"> 
-                                    <div class="input-group">
-                                        <span class="input-group-text" id="add-keyword-tooltip"><i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" title="Add a single word or multiple words separated by a ( , )"></i></span>
-                                        <input type="text" class="form-control" id="addkeywords" name="addkeywords" placeholder="Keywords" data-publication-index-id="<?= $publicationIndex->publication_index_id ?>" aria-describedby="add-keyword-tooltip">
-                                        <button class="btn btn-primary" onclick="Highlighter.runAddKeyword()" data-bs-toggle="tooltip" title="Add keywords">
-                                            + <i class='bx bxs-save'></i>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="col-md-5 gap-2">
-                                    <div class="input-group">
-                                        <span class="input-group-text" id="filter-tooltip"><i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" title="To filters keywords just start typing"></i></span>
-                                        <input type="text" class="form-control" onkeyup="filterKeywordsHandler(this);" value="" placeholder="Filter" aria-label="Filter Keywords" aria-describedby="filter-tooltip">
-                                    </div>
-                                </div>
-                                <div class="col-md-1 text-end">
-                                    <span data-bs-toggle="dropdown">
-                                        <button class="btn btn-success" aria-expanded="false" data-bs-toggle="tooltip" title="keyword Options">
-                                            <i class='bi bi-gear'></i>
-                                        </button>
-                                    </span>
-                                    <ul class="dropdown-menu">
-                                        <li class="form-check">
-                                            <input type="checkbox" class="form-check-input" id="showMeta" onchange='showMetaHandler(this);'>
-                                            <label class="form-check-label" for="showMeta">
-                                                Show Meta
-                                            </label>
-                                        </li>
-                                        <li class="form-check">
-                                            <input type="checkbox" class="form-check-input" id="filterMetaOnly" checked onchange='filterMetaOnlyHandler(this);'>
-                                            <label class="form-check-label" for="filterMetaOnly">
-                                                Filter Meta Only
-                                            </label>
-                                        </li>
-                                        <li class="form-check">
-                                            <input type="checkbox" class="form-check-input" id="referenceKeywordOnly" checked onchange='filterReferenceKeywordHandler(this);'>
-                                            <label class="form-check-label" for="referenceKeywordOnly">
-                                                Show Ref Keywords Only
-                                            </label>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
+                                <!-- TRACKS PANNEL -->
+                                <div class="tab-pane fade show active" id="row_seetings_main_tab" role="tabpanel" aria-labelledby="main-tab">
+                                    <div class="row mb-1">
+                                        <div class="col-7">
+                                            <div class="mb-2">
+                                                <label for="edit_project_name" class="form-label">
+                                                <i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" title="Summary is a reference to the index and the publication and not to the publication ONLY"></i>
+                                                Summary</label>
+                                                <textarea name="" id="summary" class="form-control"><?= trim($publicationIndex->summary ?? '') ?></textarea>
+                                            </div>
+                                            <div class="mb-2">
 
-
-
-
-                            <div class="accordion mb-3" id="accordionExample">
-                                <div class="accordion-item">
-                                    <h2 class="accordion-header" id="headingOne">
-                                        <button class="accordion-button gap-2" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                                            <i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" title="Master Keyword list can only be modified in the Indices Keyword Management section"></i> Master Keyword list
-                                        </button>
-                                    </h2>
-                                    <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
-                                        <div class="accordion-body">
-                                            <div id="masterKeywordsContainer">
-                                                <div id="masterKeywordList">
-                                                    <?php
-                                                        $mKeyWords = $IndicesKeywordService->getIndicesMasterKeywords($indices_id);
-                                                        $mKeyWords = is_null($mKeyWords) ? [] : $mKeyWords;
-
-                                                        $keywordsArray = [];
-                                                        foreach ($mKeyWords as $word) {
-                                                            $keywordsArray[] = $word['value'];
-                                                        }
-                                                        sort($keywordsArray);
-                                                        echo implode(', ', $keywordsArray);
-                                                    ?>
+                                                <label for="edit_project_name" class="form-label">
+                                                <i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" title="AKA Tracks"></i>
+                                                Sentences
+                                                </label>
+                                                <textarea name="" id="track" class="form-control" disabled="disabled"><?= trim($publicationIndex->tracks ?? '') ?></textarea>
+                                            </div>
+                                        </div>
+                                        <div class="col-5">
+                                            <div class="alert alert-primary" role="alert">
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="toggle-visability">
+                                                    <label class="form-check-label" for="toggle-visability">Show tracks<span id="toggle-visability-tag"> - off</span></label>
                                                 </div>
                                             </div>
-
+                                            <div class="alert alert-primary" role="alert">
+                                                <div class="form-check form-check-inline">
+                                                    <input class="form-check-input" type="checkbox" id="tracks-show" value="showSelectedTracks" onchange="tracksHighlighter(this.checked)" checked="checked">
+                                                    <label class="form-check-label" for="tracks-show">Show Selected Tracks</label>
+                                                </div>
+                                                <div class="form-check form-check-inline">
+                                                    <input class="form-check-input" type="checkbox" id="keywords-show" value="showSelectedKeywords" onchange="Highlighter.toggleVisibility(this.checked)" checked="checked">
+                                                    <label class="form-check-label" for="keywords-show">Show Selected Keywords</label>
+                                                </div>
+                                            </div>
+                                            <div class="alert alert-primary" role="alert">
+                                                <div class="form-check form-check-inline">
+                                                    <input class="form-check-input" type="radio" id="select-keywords-radio" name="activeState" value="selectOff" checked="checked">
+                                                    <label class="form-check-label" for="select-keywords-radio">Select Off</label>
+                                                </div>
+                                                <div class="form-check form-check-inline">
+                                                    <input class="form-check-input" type="radio" id="select-tracks-radio" name="activeState" value="selectTracks">
+                                                    <label class="form-check-label" for="select-tracks-radio">Select Track</label>
+                                                </div>
+                                                <div class="form-check form-check-inline">
+                                                    <input class="form-check-input" type="radio" id="select-keywords-radio-2" name="activeState" value="selectKeywords">
+                                                    <label class="form-check-label" for="select-keywords-radio-2">Select keywords</label>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-
-                            <fieldset class="publication-keyword-container">
-                                
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <legend>Keywords for <strong><?= $publication_id ?></strong> and <strong><?= $name ?></strong></legend>
-                                    <button class="btn btn-warning btn-sm" 
-                                        data-bs-toggle="tooltip" 
-                                        title="Show the json representation of the keywords for debugging" 
-                                        onclick="$('#keywordBlock').toggle()">
-                                        <i class="bi bi-eye"></i>
-                                    </button>
-                                </div>
-                                <div id="keywordsContainer">
-                                    <div id="keywordChips">
-                                        <!----    keywords as chips    --->
-                                        <?php
-
-// var_dump($publicationIndex->keywords);
 
 
-                                        $keyWords = is_null($publicationIndex->keywords) ? [] : $publicationIndex->keywords;
 
-                                        foreach ($keyWords as $word) :
-                                            $dataSelected = [];
-                                            $metahtml = '';
-                                            foreach ($word->metas as $meta) {
 
-                                                $dataSelected[] = $meta->id;
-                                                $metahtml .= "<li class='sub-meta-$meta->id'>
-                                                                    <strong>$meta->value</strong>
-                                                                </li>";
-                                            }
-
-                                        ?>
-
-                                            <div class="chip --nf" id="chip-keyword-<?= $word->id ?>" data-chip-val="<?= $word->value ?>">
-                                                <i class="bi bi-menu-button-wide-fill meta-control" data-keyword-id="<?= $word->id ?>" data-selected-meta="<?= implode(',', $dataSelected) ?>"></i>
-                                                <span class="word-jump"><?= $word->value ?></span>
-                                                <?php if (!$word->locked) : ?>
-                                                    <span class="closebtn" onclick="Highlighter.runRemoveKeyword(<?= $publicationIndex->publication_index_id ?>, <?= $word->id ?>)">&times;</span>
-                                                <?php else : ?>
-                                                    <span class="lock-btn" data-bs-toggle="tooltip" title="Cant be deleted here. Part of master keyword list."><i class="ri-lock-2-fill"></i></span>
-                                                <?php endif; ?>
-                                                <?= $metahtml ?>
+                                <!-- KEYWORDS PANNEL -->
+                                <div class="tab-pane fade keywords-tab" id="keywords_tab" role="tabpanel" aria-labelledby="keywords-tab">
+                                    <div class="row mb-1 sticky-sub-nav"><!-- sticky sub nab stays on screen for RS items -->
+                                        <div class="col-md-6 gap-2"> 
+                                            <div class="input-group">
+                                                <span class="input-group-text" id="add-keyword-tooltip"><i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" title="Add a single word or multiple words separated by a ( , )"></i></span>
+                                                <input type="text" class="form-control" id="addkeywords" name="addkeywords" placeholder="Keywords" data-publication-index-id="<?= $publicationIndex->publication_index_id ?>" aria-describedby="add-keyword-tooltip">
+                                                <button class="btn btn-primary" onclick="Highlighter.runAddKeyword()" data-bs-toggle="tooltip" title="Add keywords">
+                                                    + <i class='bx bxs-save'></i>
+                                                </button>
                                             </div>
-                                        <?php endforeach; ?>
-                                        <!----    keywords as chips    --->
-                                    </div>
-
-                                    <!-- init hides create a dropdown -->
-                                    <div id="meta-checkboxes" class="hide-disp" data-publication-index-id="<?= $publicationIndex->publication_index_id ?>" data-keyword-id="">
-                                        <?php foreach ($keywordsMeta as $meta) : ?>
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" id="meta_<?= $meta['indices_keyword_meta_id'] ?>" data-indices-keyword-meta-id="<?= $meta['indices_keyword_meta_id'] ?>" data-indices_id="<?= $indices_id ?>" onchange="metaStage(event)">
-                                                <label class="form-check-label" for="meta_<?= $meta['indices_keyword_meta_id'] ?>">
-                                                    <?= $meta['meta'] ?>
-                                                </label>
+                                        </div>
+                                        <div class="col-md-5 gap-2">
+                                            <div class="input-group">
+                                                <span class="input-group-text" id="filter-tooltip"><i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" title="To filters keywords just start typing"></i></span>
+                                                <input type="text" class="form-control" onkeyup="filterKeywordsHandler(this);" value="" placeholder="Filter" aria-label="Filter Keywords" aria-describedby="filter-tooltip">
                                             </div>
-                                        <?php endforeach; ?>
+                                        </div>
+                                        <div class="col-md-1 text-end">
+                                            <span data-bs-toggle="dropdown">
+                                                <button class="btn btn-success" aria-expanded="false" data-bs-toggle="tooltip" title="keyword Options">
+                                                    <i class='bi bi-gear'></i>
+                                                </button>
+                                            </span>
+                                            <ul class="dropdown-menu">
+                                                <li class="form-check">
+                                                    <input type="checkbox" class="form-check-input" id="showMeta" onchange='showMetaHandler(this);'>
+                                                    <label class="form-check-label" for="showMeta">
+                                                        Show Meta
+                                                    </label>
+                                                </li>
+                                                <li class="form-check">
+                                                    <input type="checkbox" class="form-check-input" id="filterMetaOnly" checked onchange='filterMetaOnlyHandler(this);'>
+                                                    <label class="form-check-label" for="filterMetaOnly">
+                                                        Filter Meta Only
+                                                    </label>
+                                                </li>
+                                                <li class="form-check">
+                                                    <input type="checkbox" class="form-check-input" id="referenceKeywordOnly" checked onchange='filterReferenceKeywordHandler(this);'>
+                                                    <label class="form-check-label" for="referenceKeywordOnly">
+                                                        Show Ref Keywords Only
+                                                    </label>
+                                                </li>
+                                            </ul>
+                                        </div>
                                     </div>
 
 
 
 
+                                    <div class="accordion mb-3" id="accordionExample">
+                                        <div class="accordion-item">
+                                            <h2 class="accordion-header" id="headingOne">
+                                                <button class="accordion-button gap-2" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                                                    <i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" title="Master Keyword list can only be modified in the Indices Keyword Management section"></i> Master Keyword list
+                                                </button>
+                                            </h2>
+                                            <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
+                                                <div class="accordion-body">
+                                                    <div id="masterKeywordsContainer">
+                                                        <div id="masterKeywordList">
+                                                            <?php
+                                                                $mKeyWords = $IndicesKeywordService->getIndicesMasterKeywords($indices_id);
+                                                                $mKeyWords = is_null($mKeyWords) ? [] : $mKeyWords;
 
+                                                                $keywordsArray = [];
+                                                                foreach ($mKeyWords as $word) {
+                                                                    $keywordsArray[] = $word['value'];
+                                                                }
+                                                                sort($keywordsArray);
+                                                                echo implode(', ', $keywordsArray);
+                                                            ?>
+                                                        </div>
+                                                    </div>
 
-
-
-
-
-
-
-
-
-
-
-                                    <!-- textarea for keywords json for debugging -->
-                                    <div id="keywordTextarea">
-                                        <textarea name="" id="keywordBlock" class="form-control collapse"><?= trim(json_encode($publicationIndex->keywords)) ?></textarea>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
 
-
-
-
-
-
-
-
-
-
-
-
-                                </div>
-                            </fieldset>
-                        </div>
-                        <!-- QUESTIONS PANNEL -->
-                        <div class="tab-pane fade" id="questions_tab" role="tabpanel" aria-labelledby="questions-tab">
-                            <div class="row">
-                                <div class="col-6">Question?</div>
-                                <div class="col-3">YES</div>
-                                <div class="col-3">NO</div>
-                            </div>
-                            <?php foreach ($optionalFieldsAns as $row) : ?>
-
-                                <div class="row">
-                                    <div class="col-6" style="margin: auto;"><?= $row["optional_field"] ?></div>
-                                    <div class="col-3">
-                                        <input type="radio" value='1' id="rad-yes-<?= $row["indices_optional_field_id"] ?>" name="yesNo-<?= $row["indices_optional_field_id"] ?>" <?= $row["optional_field_value"] == 1 ? 'checked' : '' ?>>
-                                        <label for="rad-yes-<?= $row["indices_optional_field_id"] ?>">Yes</label>
-                                    </div>
-                                    <div class="col-3">
-                                        <input type="radio" value='0' id="rad-no-<?= $row["indices_optional_field_id"] ?>" name="yesNo-<?= $row["indices_optional_field_id"] ?>" <?= $row["optional_field_value"] == 0 ? 'checked' : '' ?>>
-                                        <label for="rad-no-<?= $row["indices_optional_field_id"] ?>">No</label>
-                                    </div>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                        <!-- NOTES PANNEL -->
-                        <div class="tab-pane fade" id="notes_tab" role="tabpanel" aria-labelledby="notes-tab">
-                            <div class="form-group">
-                                <label for="edit_project_name">Notes to others</label>
-                                <!-- <input type="text" id="row_id"> -->
-                                <textarea name="notes" id="notes" class="form-control"><?= trim($publicationIndex->notes) ?></textarea>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- card footer -->
-                    <div class="card-footer --bg text-muted">
-                        <div class="input-group mb-0">
-                            <label class="input-group-text" for="publication_status">Select</label>
-                            <select class="form-select" 
-                                    aria-label="Index Status" 
-                                    name="publication_status" 
-                                    id="publication_status" 
-                                    onchange="updateDropdownColor()">
-                                <?php 
-                                    if (empty($publicationIndex->publication_index_status)) {
-                                        $selectStatus = 'Not started';
-                                    } else {
-                                        $selectStatus = $publicationIndex->publication_index_status;
-                                    } 
-                                ?>
+                                    <fieldset class="publication-keyword-container">
                                         
-                                <?php foreach ($statusLookup as $row) : ?>
-                                    <option 
-                                        class="<?=strToCss($row["publication_status_lookup"]) ?>" 
-                                        value="<?= $row["publication_status_lookup"] ?>" 
-                                        <?= $row["publication_status_lookup"] == $selectStatus ? 'selected' : '' ?>>
-                                        <?= $row["publication_status_lookup"] ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>             
-                            <button type="button" class="btn btn-primary save-btn" id="saveIndex">Save changes</button>         
-                        </div>
-                        
-                    </div>
-                </div>
-            </div>
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <legend>Keywords for <strong><?= $publication_id ?></strong> and <strong><?= $name ?></strong></legend>
+                                            <button class="btn btn-warning btn-sm" 
+                                                data-bs-toggle="tooltip" 
+                                                title="Show the json representation of the keywords for debugging" 
+                                                onclick="$('#keywordBlock').toggle()">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                        </div>
+                                        <div id="keywordsContainer">
+                                            <div id="keywordChips">
+                                                <!----    keywords as chips    --->
+                                                <?php
 
+                                                $keyWords = is_null($publicationIndex->keywords) ? [] : $publicationIndex->keywords;
+
+                                                foreach ($keyWords as $word) :
+                                                    $dataSelected = [];
+                                                    $metahtml = '';
+                                                    foreach ($word->metas as $meta) {
+
+                                                        $dataSelected[] = $meta->id;
+                                                        $metahtml .= "<li class='sub-meta-$meta->id'>
+                                                                            <strong>$meta->value</strong>
+                                                                        </li>";
+                                                    }
+
+                                                ?>
+
+                                                    <div class="chip --nf" id="chip-keyword-<?= $word->id ?>" data-chip-val="<?= $word->value ?>">
+                                                        <i class="bi bi-menu-button-wide-fill meta-control" data-keyword-id="<?= $word->id ?>" data-selected-meta="<?= implode(',', $dataSelected) ?>"></i>
+                                                        <span class="word-jump"><?= $word->value ?></span>
+                                                        <?php if (!$word->locked) : ?>
+                                                            <span class="closebtn" onclick="Highlighter.runRemoveKeyword(<?= $publicationIndex->publication_index_id ?>, <?= $word->id ?>)">&times;</span>
+                                                        <?php else : ?>
+                                                            <span class="lock-btn" data-bs-toggle="tooltip" title="Cant be deleted here. Part of master keyword list."><i class="ri-lock-2-fill"></i></span>
+                                                        <?php endif; ?>
+                                                        <?= $metahtml ?>
+                                                    </div>
+                                                <?php endforeach; ?>
+                                                <!----    keywords as chips    --->
+                                            </div>
+
+                                            <!-- init hides create a dropdown -->
+                                            <div id="meta-checkboxes" class="hide-disp" data-publication-index-id="<?= $publicationIndex->publication_index_id ?>" data-keyword-id="">
+                                                <?php foreach ($keywordsMeta as $meta) : ?>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="meta_<?= $meta['indices_keyword_meta_id'] ?>" data-indices-keyword-meta-id="<?= $meta['indices_keyword_meta_id'] ?>" data-indices_id="<?= $indices_id ?>" onchange="metaStage(event)">
+                                                        <label class="form-check-label" for="meta_<?= $meta['indices_keyword_meta_id'] ?>">
+                                                            <?= $meta['meta'] ?>
+                                                        </label>
+                                                    </div>
+                                                <?php endforeach; ?>
+                                            </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                            <!-- textarea for keywords json for debugging -->
+                                            <div id="keywordTextarea">
+                                                <textarea name="" id="keywordBlock" class="form-control collapse"><?= trim(json_encode($publicationIndex->keywords)) ?></textarea>
+                                            </div>
+
+
+
+
+
+
+
+
+
+
+
+
+                                        </div>
+                                    </fieldset>
+                                </div>
+                                <!-- QUESTIONS PANNEL -->
+                                <div class="tab-pane fade" id="questions_tab" role="tabpanel" aria-labelledby="questions-tab">
+                                    <div class="row">
+                                        <div class="col-6">Question?</div>
+                                        <div class="col-3">YES</div>
+                                        <div class="col-3">NO</div>
+                                    </div>
+                                    <?php foreach ($optionalFieldsAns as $row) : ?>
+
+                                        <div class="row">
+                                            <div class="col-6" style="margin: auto;"><?= $row["optional_field"] ?></div>
+                                            <div class="col-3">
+                                                <input type="radio" value='1' id="rad-yes-<?= $row["indices_optional_field_id"] ?>" name="yesNo-<?= $row["indices_optional_field_id"] ?>" <?= $row["optional_field_value"] == 1 ? 'checked' : '' ?>>
+                                                <label for="rad-yes-<?= $row["indices_optional_field_id"] ?>">Yes</label>
+                                            </div>
+                                            <div class="col-3">
+                                                <input type="radio" value='0' id="rad-no-<?= $row["indices_optional_field_id"] ?>" name="yesNo-<?= $row["indices_optional_field_id"] ?>" <?= $row["optional_field_value"] == 0 ? 'checked' : '' ?>>
+                                                <label for="rad-no-<?= $row["indices_optional_field_id"] ?>">No</label>
+                                            </div>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                                <!-- NOTES PANNEL -->
+                                <div class="tab-pane fade" id="notes_tab" role="tabpanel" aria-labelledby="notes-tab">
+                                    <div class="form-group">
+                                        <label for="edit_project_name">Notes to others</label>
+                                        <!-- <input type="text" id="row_id"> -->
+                                        <textarea name="notes" id="notes" class="form-control"><?= trim($publicationIndex->notes) ?></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- card footer -->
+                            <div class="card-footer --bg text-muted">
+                                <div class="input-group mb-0">
+                                    <label class="input-group-text" for="publication_status">Select</label>
+                                    <select class="form-select" 
+                                            aria-label="Index Status" 
+                                            name="publication_status" 
+                                            id="publication_status" 
+                                            onchange="updateDropdownColor()">
+                                        <?php 
+                                            if (empty($publicationIndex->publication_index_status)) {
+                                                $selectStatus = 'Not started';
+                                            } else {
+                                                $selectStatus = $publicationIndex->publication_index_status;
+                                            } 
+                                        ?>
+                                                
+                                        <?php foreach ($statusLookup as $row) : ?>
+                                            <option 
+                                                class="<?=strToCss($row["publication_status_lookup"]) ?>" 
+                                                value="<?= $row["publication_status_lookup"] ?>" 
+                                                <?= $row["publication_status_lookup"] == $selectStatus ? 'selected' : '' ?>>
+                                                <?= $row["publication_status_lookup"] ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>             
+                                    <button type="button" class="btn btn-primary save-btn" id="saveIndex">Save changes</button>         
+                                </div>
+                                
+                            </div>
+                        </div>
+                    </div>
+                <?php else : ?>
+                    <!-- User does not have permission to edit the publication -->
+                    <div class="alert alert-danger" role="alert">
+                        You do not have permission to edit this publication. Please contact the administrator for access.
+                    </div>
+                <?php endif; ?>
             <div class="row">
                 <div class="col-lg-12">
                     <div class="card">
@@ -1645,14 +1678,51 @@ if (!is_null($pub_type)) {
 
         });
 
-        const init = () => {
+        const selectSearch = () => {
+            let searchInputs = [
+                {inputId:'publicationIds', searchId:'publicationIdsDropdown'}, 
+                {inputId:'indexIds', searchId:'indexIdsDropdown'}
+            ];
+
+            searchInputs.forEach((item) => {
+                 const inputSearch = document.getElementById(item.inputId);
+                 const selectOptions = document.querySelectorAll(`#${item.searchId} li .dropdown-item`);
+                 
+                 inputSearch.addEventListener('keyup', function() {
+                    const filter = inputSearch.value.toLowerCase();
+                    selectOptions.forEach((option) => {
+                        if (option.textContent.toLowerCase().includes(filter)) {
+                            option.style.display = '';
+                        } else {
+                            option.style.display = 'none';
+                        }
+                    })
+
+                 })
+
+            })
+
+        }
+
+        /**
+         * trigger functions on page done loading
+         */
+        document.addEventListener('DOMContentLoaded', function() {
+            selectSearch();
             tracksHighlighter();
             // set initial dropdown color
             updateDropdownColor();
             // turn off meta view by default
             showMetaHandler(document.getElementById('showMeta'));
-        }
-        init();
+
+
+
+        });
+
+        // const init = () => {
+ 
+        // }
+        // init();
     </script>
 
     <?php include __DIR__ . '/../includes/script.import.inc.php'; ?>

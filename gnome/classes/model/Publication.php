@@ -36,10 +36,35 @@ class Publication extends DBConnection
     }
 
     function getPublicationIds($publicationTypeId) {
-        $sql = "SELECT publication_id FROM {$this->table} WHERE publication_type_id = :publication_type_id";
+        
+        $redis = $this->getRedisConnection();
+        $cacheKey = "publication_ids_{$publicationTypeId}"; 
+
+        if ($redis && $redis->exists($cacheKey)) {
+            // Fetch from Redis cache
+            $cachedIds = $redis->get($cacheKey);
+            return json_decode($cachedIds, true);
+        }
+
+        $sql = "SELECT 
+            publication_id 
+        FROM {$this->table} 
+        WHERE publication_type_id = :publication_type_id";
+        
         $pdoc = $this->dbc->prepare($sql);
+        
         $pdoc->execute([':publication_type_id' => $publicationTypeId]);
-        return $pdoc->fetchAll();
+        
+        $publicationIds = $pdoc->fetchAll();
+
+        if ($redis) {
+            // Store in Redis cache for future requests
+            $redis->set($cacheKey, json_encode($publicationIds));
+            // Optionally set an expiration time (e.g., 3600 seconds = 1 hour)
+            $redis->expire($cacheKey, 3600);
+        }
+
+        return $publicationIds;
     }
 
     function getPublication($id)

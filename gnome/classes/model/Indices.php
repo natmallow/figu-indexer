@@ -29,14 +29,14 @@ class Indices extends DBConnection
         $whereSql = implode(' AND ', $whereParts);
 
         /*
-     * The count uses the same filter as the result query.
-     */
+        * The count uses the same filter as the result query.
+        */
         $countSql = "SELECT COUNT(*) AS count
-        FROM {$this->table} I
-        INNER JOIN user U
-            ON I.created_by = U.username
-        WHERE {$whereSql}
-    ";
+            FROM {$this->table} I
+            INNER JOIN user U
+                ON I.created_by = U.username
+            WHERE {$whereSql}
+            ";
 
         $countStatement = $this->getPreparedQuery(
             $countSql,
@@ -53,24 +53,24 @@ class Indices extends DBConnection
         );
 
         $sql = "SELECT
-            I.indices_id,
-            I.name,
-            I.description_html,
-            I.highlight_color,
-            I.text_color,
-            I.created_by,
-            CONCAT(
-                U.name_first,
-                ' ',
-                U.name_last
-            ) AS ownerName
-        FROM {$this->table} I
-        INNER JOIN user U
-            ON I.created_by = U.username
-        WHERE {$whereSql}
-        ORDER BY I.name ASC
-        LIMIT {$pages->limit_start}, {$pages->limit_end}
-    ";
+                I.indices_id,
+                I.name,
+                I.description_html,
+                I.highlight_color,
+                I.text_color,
+                I.created_by,
+                CONCAT(
+                    U.name_first,
+                    ' ',
+                    U.name_last
+                ) AS ownerName
+            FROM {$this->table} I
+            INNER JOIN user U
+                ON I.created_by = U.username
+            WHERE {$whereSql}
+            ORDER BY I.name ASC
+            LIMIT {$pages->limit_start}, {$pages->limit_end}
+        ";
 
         $statement = $this->getPreparedQuery(
             $sql,
@@ -83,6 +83,8 @@ class Indices extends DBConnection
 
         return [$response, $pages];
     }
+
+    
 
     function fetchIndices()
     {
@@ -254,7 +256,7 @@ class Indices extends DBConnection
             $this->addIndexUser($indicesId, $userId, 1);
             return $indicesId;
         } catch (\PDOException $e) {
-            echo $this->msg('Error :' . $e->getMessage());
+            $this->msg('Error :' . $e->getMessage());
         }
     }
 
@@ -420,6 +422,7 @@ class Indices extends DBConnection
         return $pdoc->fetchAll();
     }
 
+    
     function canUserAccess($indicesId, $username)
     {
         $sql = " SELECT count(*) AS count, IP.* 

@@ -26,6 +26,22 @@ function redirectToCurrentPage()
     exit;
 }
 
+// Should be in security class, but for now, this is a quick fix to check if the user has access to the page
+function hasAccessWith(array $userRoles, array $accessArgs): bool
+{
+    // 1. Get the keys of the user roles that have a value of 1
+    $strictKeys = array_keys($userRoles, 1, true);
+    
+    // 2. Safely get session roles (ensuring it's an array, not a string)
+    $sessionRoles = (array)($_SESSION['roles'] ?? []);
+
+    // 3. MERGE them into a flat array instead of nesting them
+    $usersAccess = array_merge($sessionRoles, $strictKeys);
+
+    // 4. Compare the flat array against your required access arguments
+    return !empty(array_intersect($usersAccess, $accessArgs));
+}
+
 
 function lang()
 {

@@ -312,7 +312,7 @@ list($indices, $paginator) = $Indices->getIndices();
             var containers = document.querySelectorAll('.text-container');
             containers.forEach((container, index) => {
                 var button = document.getElementById("readMoreButton" + index);
-console.log('scrollHeight', container.scrollHeight, 'offsetHeight', container.offsetHeight);
+
                 if (container.scrollHeight > container.offsetHeight) {
                     // If content height is more than container height, show the button
                     button.classList.remove('d-none');

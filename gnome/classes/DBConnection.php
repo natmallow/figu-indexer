@@ -18,6 +18,13 @@ class DBConnection
     protected $_config;
 
     /**
+     * Redis connection configuration.
+     * 
+     * @var array<string, mixed>|null
+     */
+    protected $_redisConfig;
+
+    /**
      * Active PDO connection.
      *
      * @var PDO|null
@@ -37,6 +44,7 @@ class DBConnection
      * @var int
      */
     public $rowsPrePage = 10;
+
 
     /**
      * Singleton database connection.
@@ -83,6 +91,7 @@ class DBConnection
         }
 
         $this->_config = $config['connections']['mysql'][$environment];
+        $this->_redisConfig = $config['redis']['env'][$environment] ?? null;
 
         $this->getPDOConnection();
     }
@@ -105,6 +114,38 @@ class DBConnection
     public function __destruct()
     {
         $this->dbc = null;
+    }
+
+    /**
+     * Returns a Redis connection.
+     */
+    public function getRedisConnection() {
+        // If the Redis extension is not available, return null to indicate
+        // that a Redis connection cannot be created.
+        if (!class_exists('Redis')) {
+            return null;
+        }
+
+        /** @var \Redis $redis */
+        $redis = new \Redis();
+
+        try {
+            $redis->connect(
+                $this->_redisConfig['host'],
+                $this->_redisConfig['port']
+            );
+        } catch (\Exception $exception) {
+            $this->msg('Unable to connect to Redis: ' . $exception->getMessage());
+            // throw new \RuntimeException(
+            //     'Unable to connect to Redis: '
+            //     . $exception->getMessage(),
+            //     (int) $exception->getCode(),
+            //     $exception
+            // );
+            return null;
+        }
+
+        return $redis;
     }
 
     /**
@@ -352,6 +393,12 @@ class DBConnection
     ) {
         $table = $this->table;
 
+        if ($table === '') {
+            throw new \RuntimeException(
+                'Table name is not set for this DBConnection instance.'
+            );
+        }
+        
         if ($tableOveride !== null) {
             $table = $tableOveride;
         }
@@ -392,6 +439,12 @@ class DBConnection
         array $conditions = []
     ) {
         $table = $this->table;
+
+        if ($table === '') {
+            throw new \RuntimeException(
+                'Table name is not set for this DBConnection instance.'
+            );
+        }
 
         if ($tableOverride !== null) {
             $table = $tableOverride;
