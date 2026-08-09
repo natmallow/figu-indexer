@@ -252,7 +252,18 @@ if (!is_null($pub_type)) {
             </nav>
         </div><!-- End Page Title -->
 
-        <section class="section">
+        <section class="section" >
+
+                
+                <?php if (!(array)$publicationIndex) : ?>
+                    <div class="initializer">
+                        <div class="alert" style="background-color: #000; border-color: #dee2e6; color: #fff;" role="alert">
+                            No publication index data found for this publication, to activate the editor please click the button below.
+                        </div>
+                        <button type="button" class="btn btn-primary save-btn" id="initIndexer">Initialize Editor</button>  
+                    </div> 
+                <?php endif; ?>
+                
 
                 <?php if (hasAccessWith($Indices->canUserAccess($indices_id, $_SESSION['username']), ['can_write','can_admin', 'is_owner', 'admin', 'super_admin'])) :?>
                     <div class="card sticky-sub" id="stickySub" style="z-index: 1020;"> 
@@ -540,7 +551,7 @@ if (!is_null($pub_type)) {
                                     <div class="form-group">
                                         <label for="edit_project_name">Notes to others</label>
                                         <!-- <input type="text" id="row_id"> -->
-                                        <textarea name="notes" id="notes" class="form-control"><?= trim($publicationIndex->notes) ?></textarea>
+                                        <textarea name="notes" id="notes" class="form-control"><?= property_exists($publicationIndex, 'notes') ? trim($publicationIndex->notes) : '' ?></textarea>
                                     </div>
                                 </div>
                             </div>
@@ -583,6 +594,24 @@ if (!is_null($pub_type)) {
                         You do not have permission to edit this publication. Please contact the administrator for access.
                     </div>
                 <?php endif; ?>
+
+
+                <!-- missing image box -->
+                    <div class="row d-none mb-3" id="missing-images-alert-container">
+                        <div class="col-lg-3 indexer">
+                            
+                                <aside>
+                                    The following images are missing:
+                                    and need to be added manually to the <code>media/images/publication</code> folder for the publication to display correctly.
+                                </aside>
+                           
+                            
+                        </div>  
+                        <div class="col-lg-9" id="missing-images-alert">
+                        </div>
+                    </div>
+                <!-- missing image box end -->
+
             <div class="row">
                 <div class="col-lg-12">
                     <div class="card">
@@ -1625,58 +1654,118 @@ if (!is_null($pub_type)) {
         }
 
 
-        document.getElementById('saveIndex').addEventListener('click', function(e) {
-            spinnerAdd('dragable_modal');
-            const action = 'update-publication';
-            const indices_id = '<?= $indices_id ?>';
-            const publication_id = '<?= $publication_id ?>';
-            const tracks = $('#track').val();
-            const summary = $('#summary').val();
-            const keyWords = $('#keywordBlock').val();
-            const notes = $('#notes').val();
-            const publicationStatus = $('#publication_status').val();
-            const optionalFieldsAns = $('#questions_tab :radio:checked');
-            let optionalFieldsArr = $.map(optionalFieldsAns, function(el) {
-                return {
-                    'publication_id': publication_id,
-                    'indices_optional_field_id': el.id.slice(el.id.lastIndexOf("-") + 1, el.id.length),
-                    'optional_field_value': el.value
-                }
-            });
-            optionalFieldsArr = JSON.stringify(optionalFieldsArr),
-                // console.log(optionalFieldsArr)
-                jsonData = {
-                    action,
-                    indices_id,
-                    publication_id,
-                    tracks,
-                    keyWords,
-                    publicationStatus,
-                    optionalFieldsArr,
-                    notes,
-                    summary
-                };
-            // console.log(jsonData)
+        const saveIndexButton = document.getElementById('saveIndex');
 
-            $.ajax({
-                type: "POST",
-                url: "publication_ajax.php",
-                data: jsonData,
-                dataType: 'json',
-                cache: false,
-                success: function(html) {
-                    alert('save complete');
-                    spinnerRemove('dragable_modal');
-                    // update tracks with new sort order
-                    $('#track').val(html?.tracks);
-                },
-                error: function(res) {
-                    alert('no', res);
-                    spinnerRemove('dragable_modal');
-                }
-            });
+        if (saveIndexButton) {
+            saveIndexButton.addEventListener('click', function(e) {
+                // spinnerAdd('dragable_modal');
+                const action = 'update-publication';
+                const indices_id = '<?= $indices_id ?>';
+                const publication_id = '<?= $publication_id ?>';
+                const tracks = $('#track').val();
+                const summary = $('#summary').val();
+                const keyWords = $('#keywordBlock').val();
+                const notes = $('#notes').val();
+                const publicationStatus = $('#publication_status').val();
+                const optionalFieldsAns = $('#questions_tab :radio:checked');
+                let optionalFieldsArr = $.map(optionalFieldsAns, function(el) {
+                    return {
+                        'publication_id': publication_id,
+                        'indices_optional_field_id': el.id.slice(el.id.lastIndexOf("-") + 1, el.id.length),
+                        'optional_field_value': el.value
+                    }
+                });
+                optionalFieldsArr = JSON.stringify(optionalFieldsArr),
+                    // console.log(optionalFieldsArr)
+                    jsonData = {
+                        action,
+                        indices_id,
+                        publication_id,
+                        tracks,
+                        keyWords,
+                        publicationStatus,
+                        optionalFieldsArr,
+                        notes,
+                        summary
+                    };
+                // console.log(jsonData)
 
-        });
+                $.ajax({
+                    type: "POST",
+                    url: "publication_ajax.php",
+                    data: jsonData,
+                    dataType: 'json',
+                    cache: false,
+                    success: function(html) {
+                        alert('save complete');
+                        // spinnerRemove('dragable_modal');
+                        // update tracks with new sort order
+                        $('#track').val(html?.tracks);
+                    },
+                    error: function(res) {
+                        alert('no', res);
+                        // spinnerRemove('dragable_modal');
+                    }
+                });
+
+            });
+        }
+
+        const initIndexerButton = document.getElementById('initIndexer');
+
+        if (initIndexerButton) {
+
+            initIndexerButton.addEventListener('click', function(e) {
+                // spinnerAdd('dragable_modal');
+                const action = 'update-publication';
+                const indices_id = '<?= $indices_id ?>';
+                const publication_id = '<?= $publication_id ?>';
+                const tracks = $('#track').val();
+                const summary = $('#summary').val();
+                const keyWords = $('#keywordBlock').val();
+                const notes = $('#notes').val();
+                const publicationStatus = $('#publication_status').val();
+                const optionalFieldsAns = $('#questions_tab :radio:checked');
+                let optionalFieldsArr = $.map(optionalFieldsAns, function(el) {
+                    return {
+                        'publication_id': publication_id,
+                        'indices_optional_field_id': el.id.slice(el.id.lastIndexOf("-") + 1, el.id.length),
+                        'optional_field_value': el.value
+                    }
+                });
+                optionalFieldsArr = JSON.stringify(optionalFieldsArr),
+                    // console.log(optionalFieldsArr)
+                    jsonData = {
+                        action,
+                        indices_id,
+                        publication_id,
+                        tracks,
+                        keyWords,
+                        publicationStatus,
+                        optionalFieldsArr,
+                        notes,
+                        summary
+                    };
+                // console.log(jsonData)
+
+                $.ajax({
+                    type: "POST",
+                    url: "publication_ajax.php",
+                    data: jsonData,
+                    dataType: 'json',
+                    cache: false,
+                    success: function(html) {
+                        alert('Initialization in progress. \nPress ok to complete refresh.');
+                        window.location.reload();
+                    },
+                    error: function(res) {
+                        alert('an error has occurred\n', res);
+                        // spinnerRemove('dragable_modal');
+                    }
+                });
+
+            });
+        }
 
         const selectSearch = () => {
             let searchInputs = [
@@ -1704,6 +1793,26 @@ if (!is_null($pub_type)) {
 
         }
 
+        const missingImagesChecker = () => {
+            const images = document.querySelectorAll('img');
+            const missingImages = [];
+            images.forEach((img) => {
+                if (!img.complete || img.naturalWidth === 0) {
+                    missingImages.push(img.src);
+                }
+            });
+            if (missingImages.length > 0) {
+                document.getElementById('missing-images-alert-container').classList.remove('d-none');
+                const alertContainer = document.getElementById('missing-images-alert');
+                missingImages.forEach((imgSrc) => {
+                    alertContainer.innerHTML += `<div class="chip chip-warning active" role="chip" aria-label="Missing Image">
+                        ${imgSrc}
+                    </div>`;
+                })
+                
+            }
+        }
+
         /**
          * trigger functions on page done loading
          */
@@ -1714,9 +1823,8 @@ if (!is_null($pub_type)) {
             updateDropdownColor();
             // turn off meta view by default
             showMetaHandler(document.getElementById('showMeta'));
-
-
-
+            // check for missing images and alert user if any are missing
+            missingImagesChecker();
         });
 
         // const init = () => {

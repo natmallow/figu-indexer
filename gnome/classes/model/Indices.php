@@ -59,6 +59,17 @@ class Indices extends DBConnection
                 I.highlight_color,
                 I.text_color,
                 I.created_by,
+                (
+                    SELECT COUNT(*) 
+                    FROM publications P
+                    WHERE P.is_ready = 1 
+                      AND NOT EXISTS (
+                          SELECT 1 
+                          FROM publication_index PI 
+                          WHERE PI.publication_id = P.publication_id 
+                            AND PI.indices_id = I.indices_id
+                      )
+                ) AS pIcount,
                 CONCAT(
                     U.name_first,
                     ' ',

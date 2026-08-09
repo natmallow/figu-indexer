@@ -4,6 +4,17 @@
 $base-font-color: rgb(233, 233, 233);
 $not-found: rgb(224, 190, 255);
 
+.ag-selection-checkbox {
+  --ag-icon-size: 24px !important;
+}
+
+
+#selectAllChk.cb-header {
+    width: 24px;
+    height: 24px;
+}
+
+
 @mixin gen-flex {
   display: flex;
   justify-content: space-between;
@@ -29,6 +40,7 @@ $not-found: rgb(224, 190, 255);
   overflow-y: auto;
   overflow-x: hidden;
   background-color: #d9fde3;
+
   .list-group-item {
     margin-bottom: 5px;
     border: 1px solid #ddd;
@@ -50,6 +62,7 @@ $not-found: rgb(224, 190, 255);
   list-style-type: none;
   overflow-y: auto;
 }
+
 .list-group-item {
   padding: 10px;
   margin-bottom: 5px;
@@ -103,16 +116,100 @@ $not-found: rgb(224, 190, 255);
 }
 
 @mixin clear {
-  background: 
-  linear-gradient(45deg, transparent 45%, red 50%, transparent 55%),
-  linear-gradient(-45deg, transparent 45%, red 50%, transparent 55%);
+  background:
+    linear-gradient(45deg, transparent 45%, red 50%, transparent 55%),
+    linear-gradient(-45deg, transparent 45%, red 50%, transparent 55%);
+}
+
+@mixin legend-fmt {
+  margin-right: 4px;
+  padding: 2px;
+  cursor: pointer;
+}
+
+@mixin more-than-300 {
+  background-color: #8b0000;
+  color: #ffffff;
+}
+
+@mixin between-101-300 {
+  background-color: #bd2929;
+  color: #ffffff;
+}
+
+@mixin between-21-100 {
+  background-color: #8672f1;
+  color: #ffffff;
+}
+
+@mixin between-6-20 {
+  background-color: #4ea8de;
+  color: #000000;
+}
+
+@mixin between-1-5 {
+  background-color: #ffcccb;
+  color: #000000;
+}
+
+@mixin checked {
+  background-color: #bde0fe;
+  color: #000000;
+}
+
+
+
+.more-than-300 {
+  @include more-than-300;
+  @include legend-fmt;
+}
+
+.between-101-300 {
+  @include between-101-300;
+  @include legend-fmt;
+}
+
+.between-21-100 {
+  @include between-21-100;
+  @include legend-fmt;
+}
+
+.between-6-20 {
+  @include between-6-20;
+  @include legend-fmt;
+}
+
+.between-1-5 {
+  @include between-1-5;
+  @include legend-fmt;
+}
+
+
+
+
+
+// .medium-count {
+//   @include medium-count;
+// }
+
+// .low-count {
+//   @include low-count;
+// }
+
+// .critical-low {
+//   @include critical-low;
+// }
+
+@mixin checked {
+  background-color: #ffffff !important;
 }
 
 .not-started {
   @include not-started;
 }
 
-.inprogress, .in-progress {
+.inprogress,
+.in-progress {
   @include inprogress;
 }
 
@@ -136,10 +233,17 @@ $not-found: rgb(224, 190, 255);
   @include clear;
 }
 
+
+
+
+
+
+
 .ready {
   background-color: #319331;
   color: $base-font-color;
   padding: 2px;
+
   a {
     color: $base-font-color;
   }
@@ -149,6 +253,7 @@ $not-found: rgb(224, 190, 255);
   background-color: #973737; //#962c2e;
   color: $base-font-color;
   padding: 2px;
+
   a {
     color: $base-font-color;
   }
@@ -189,6 +294,7 @@ $not-found: rgb(224, 190, 255);
   padding-right: 4px;
   border-radius: 5px;
   cursor: pointer;
+
   &:hover {
     background-color: #317cdf;
     color: $base-font-color;
@@ -205,6 +311,7 @@ $not-found: rgb(224, 190, 255);
 
 .dynamic-sm {
   font-size: 14px;
+
   span {
     font-weight: bold;
   }
@@ -222,50 +329,120 @@ $not-found: rgb(224, 190, 255);
 .legend {
   display: flex;
   justify-content: space-between;
-  > div {
+  align-items: center;
+  /* Ensures text and boxes align vertically */
+
+
+  >div {
     background-color: transparent !important;
     background: none !important;
     display: flex;
+    align-items: center;
+    /* Aligns inner text/icons nicely */
+    gap: 4px;
   }
-  
 
-  > div.not-started:before {
+  /* Core numeric blocks styling */
+  >div.not-started:before {
     @include legend-before;
     @include not-started;
   }
 
-  > div.inprogress:before,
-  > div.in-progress:before {
+  >div.inprogress:before,
+  >div.in-progress:before {
     @include legend-before;
     @include inprogress;
   }
 
-  > div.needs-review:before {
+  >div.needs-review:before {
     @include legend-before;
     @include needs-review;
   }
 
-  > div.being-reviewed:before {
+  >div.being-reviewed:before {
     @include legend-before;
     @include being-reviewed;
   }
 
-  > div.no-ref-found:before {
+  >div.no-ref-found:before {
     @include legend-before;
     @include no-ref-found;
   }
 
-  > div.finished:before {
+  >div.finished:before {
     @include legend-before;
     @include finished;
   }
 
-  > div.clear:before {
+  >div.clear:before {
     @include legend-before;
     @include clear;
   }
 
-  > div > button {
+  >div.more-than-300:before {
+    @include legend-before;
+    @include more-than-300;
+    @include legend-fmt;
+  }
+
+  >div.between-101-300:before {
+    @include legend-before;
+    @include between-101-300;
+    @include legend-fmt;
+  }
+
+  >div.between-21-100:before {
+    @include legend-before;
+    @include between-21-100;
+    @include legend-fmt;
+  }
+
+  >div.between-6-20:before {
+    @include legend-before;
+    @include between-6-20;
+    @include legend-fmt;
+  }
+
+  >div.between-1-5:before {
+    @include legend-before;
+    @include between-1-5;
+    @include legend-fmt;
+  }
+
+  /* FIX: Apply the same square box rule to checked, just like everything else */
+  >div.checked:before {
+    @include legend-before;
+    @include checked;
+    content: none;
+    /* Keeps the square spacer logic, but lets the real Font Awesome icon handle the visual layout */
+    display: none;
+    /* Hide the empty pseudo-element since the real <i> tag is our block now */
+  }
+
+  /* Segment 5: Square styling for the real Font Awesome Icon */
+  >div.checked .bxs-check-circle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    /* Inheriting exact dimensions and border from your legend-before rule */
+    width: 24px;
+    height: 24px;
+    border: 1px solid #000;
+    margin-right: 4px;
+    /* Matches layout separation */
+
+    @include checked;
+    /* Soft Light Blue background */
+    color: #2876e4;
+    /* Deep contrast blue for the check icon */
+
+    font-size: 24px;
+    /* Size of checkmark icon inside the box */
+  }
+
+
+  >div>button {
     padding: 0px !important;
   }
 }
@@ -276,16 +453,19 @@ $not-found: rgb(224, 190, 255);
 
 .card.--index {
   min-height: 222px;
-  & .card-body {
-  }
+
+  & .card-body {}
+
   & .card-actions {
     padding: 0 20px 20px 20px;
   }
 }
 
 .text-container {
-  max-height: 4em; /* Initial height for collapsed state */
-  min-height: 4em; /* Ensure at least three lines are shown */
+  max-height: 4em;
+  /* Initial height for collapsed state */
+  min-height: 4em;
+  /* Ensure at least three lines are shown */
   overflow: hidden;
   position: relative;
   transition: max-height 0.5s ease;
@@ -297,12 +477,12 @@ $not-found: rgb(224, 190, 255);
   bottom: 0;
   left: 0;
   right: 0;
-  height: 1em; /* Height of the gradient effect */
-  background: linear-gradient(
-    to bottom,
-    transparent,
-    white
-  ); /* Gradient to white */
+  height: 1em;
+  /* Height of the gradient effect */
+  background: linear-gradient(to bottom,
+      transparent,
+      white);
+  /* Gradient to white */
 }
 
 .nat {
@@ -310,18 +490,22 @@ $not-found: rgb(224, 190, 255);
     color: rgb(54, 54, 54);
     background-color: rgb(201, 225, 255);
     padding: 0px 0px;
-    & .save-btn, & .detach-btn {
-      margin:3px;
+
+    & .save-btn,
+    & .detach-btn {
+      margin: 3px;
     }
   }
 }
 
 .--card {
+
   &:hover,
   &:focus-within {
     cursor: pointer;
     background-color: rgba(20, 36, 71, 0.2);
   }
+
   &.--selected {
     box-shadow: 0px 0px 2px 2px rgb(43 83 170 / 80%);
   }
@@ -338,8 +522,10 @@ $not-found: rgb(224, 190, 255);
   top: 60px;
   // height: 226px;
   // overflow-y: hidden;
-     height: auto !important; /* Forces the box to size itself to the content */
-    max-height: none !important; /* Erases any restrictive maximum heights */
+  height: auto !important;
+  /* Forces the box to size itself to the content */
+  max-height: none !important;
+  /* Erases any restrictive maximum heights */
 }
 
 .dropdown-menu {
@@ -364,10 +550,11 @@ tr {
 #sys-node-holder {
   max-height: 0px;
 }
-  
+
 
 .sys-notification {
   position: relative;
+
   .btn-close {
     padding: 0.75rem !important;
   }
@@ -401,12 +588,14 @@ tr {
 
 .master-keyword-container {
   background-color: lavender;
+
   legend {
     font-weight: bold;
   }
 }
 
 .publication-keyword-container {
+
   // background-color: var(--bs-secondary-bg);
   legend {
     // font-weight: bold;
@@ -414,13 +603,14 @@ tr {
 }
 
 .btn-change-indexer {
-    --bs-btn-padding-y: 0;
-    --bs-btn-padding-x: 0.25rem;
-    --bs-btn-font-size: 0.86rem;
-    border-radius: 3px;
-    &.dropdown-toggle::after {
-      margin-left: 0;
-    }
+  --bs-btn-padding-y: 0;
+  --bs-btn-padding-x: 0.25rem;
+  --bs-btn-font-size: 0.86rem;
+  border-radius: 3px;
+
+  &.dropdown-toggle::after {
+    margin-left: 0;
+  }
 
 }
 
@@ -431,14 +621,17 @@ tr {
   color: #FF00FF;
   margin: 0 4px;
   cursor: pointer;
+
   &:hover {
     text-decoration: underline;
   }
 }
 
 .wide-popover {
-  --bs-popover-max-width: 402px; /* Adjust this value as needed */
-  max-width: 402px; /* Ensure the popover does not exceed this width */
+  --bs-popover-max-width: 402px;
+  /* Adjust this value as needed */
+  max-width: 402px;
+  /* Ensure the popover does not exceed this width */
 }
 
 
@@ -452,7 +645,7 @@ tr {
   flex-wrap: wrap;
   gap: 12px;
   width: 100%;
-  
+
   &.--border {
     border: #314edf;
     border-width: 3px;
@@ -473,7 +666,7 @@ tr {
   font-weight: 600;
   vertical-align: text-top;
 
-  &.--nf { 
+  &.--nf {
     background-color: $not-found;
   }
 
@@ -488,7 +681,7 @@ tr {
     background-color: #ffbfbf;
   }
 
-  > li {
+  >li {
     padding-left: 30px;
     margin-bottom: 4px;
     list-style: none;
@@ -569,6 +762,7 @@ tr {
   width: fit-content;
   padding: 20px;
 }
+
 // [class*="sub-meta-"] {
 //   display: none;
 // }
@@ -576,6 +770,7 @@ tr {
 .dropdown-menu {
   li.form-check {
     padding: 0 1rem 0 2.5rem;
+
     &:hover {
       background-color: rgb(246, 249, 255);
     }
@@ -622,6 +817,23 @@ ul {
 //   border-bottom: solid #ccc 1px !important;
 //   border-radius: 0 !important;
 // }
+
+.initializer {
+  padding: 42px 10px 0px 10px;
+  text-align: center;
+  background-color: rgb(255 255 255 / 0.2);
+  backdrop-filter: blur(10px);
+  position: absolute;
+  z-index: 1025;
+  width: 100%;
+  height: 100%;
+}
+
+.section:has(.initializer) {
+  position: relative;
+}
+
+
 
 .meta-section {
   border-radius: 6px;
@@ -683,13 +895,16 @@ ul {
   font-size: 12px;
   text-align: center;
 }
+
 .img-list {
   height: 70px;
   border-bottom: 1px solid #ccc;
   align-items: center;
+
   &:last-child {
     border-bottom: none;
   }
+
   & img {
     max-height: 60px;
     max-width: 60px;
@@ -706,17 +921,24 @@ ul {
 
 .enf-len {
   min-width: max-content;
-  overflow: hidden; /* Hide text that goes beyond the element's width */
-  text-overflow: ellipsis; /* Add ellipsis at the end of the truncated text */
+  overflow: hidden;
+  /* Hide text that goes beyond the element's width */
+  text-overflow: ellipsis;
+  /* Add ellipsis at the end of the truncated text */
   display: inline-block;
 }
 
 .smooth-span {
-  white-space: nowrap; /* Keep text in a single line */
-  overflow: hidden; /* Hide text that goes beyond the element's width */
-  text-overflow: ellipsis; /* Add ellipsis at the end of the truncated text */
-  max-width: 75%; /* Adjust this as needed for your layout */
-  display: inline-block; /* Ensures the span behaves like a block for width purposes */
+  white-space: nowrap;
+  /* Keep text in a single line */
+  overflow: hidden;
+  /* Hide text that goes beyond the element's width */
+  text-overflow: ellipsis;
+  /* Add ellipsis at the end of the truncated text */
+  max-width: 75%;
+  /* Adjust this as needed for your layout */
+  display: inline-block;
+  /* Ensures the span behaves like a block for width purposes */
   line-height: 34px;
 
 }
@@ -728,6 +950,7 @@ ul {
   align-items: center;
   font-size: 20px;
   font-weight: 600;
+
   button {
     position: unset !important;
     padding: 4px !important;
@@ -754,10 +977,14 @@ ul {
 /* GEN */
 /***************************/
 .unselectable-text {
-  -webkit-user-select: none; /* Safari */
-  -moz-user-select: none; /* Firefox */
-  -ms-user-select: none; /* Internet Explorer/Edge */
-  user-select: none; /* Standard syntax for Chrome, Opera, and others */
+  -webkit-user-select: none;
+  /* Safari */
+  -moz-user-select: none;
+  /* Firefox */
+  -ms-user-select: none;
+  /* Internet Explorer/Edge */
+  user-select: none;
+  /* Standard syntax for Chrome, Opera, and others */
 }
 
 /***************************/
@@ -767,6 +994,7 @@ ul {
 .image-header {
   justify-content: space-between;
   padding-bottom: 24px;
+
   img {
     max-width: 150px;
   }
@@ -775,17 +1003,30 @@ ul {
 
 .word-jump {
   cursor: pointer;
-} 
+}
 
 
-  .--current-hl {
-    box-shadow: 0px 5px 5px rgb(12, 12, 156);
-    font-weight: bolder;
-  } 
+.--current-hl {
+  box-shadow: 0px 5px 5px rgb(12, 12, 156);
+  font-weight: bolder;
+}
 
 
-.cb-header{
+.cb-header {
   width: 16px;
   height: 16px;
 }
 
+.indexer {
+  aside {
+    padding-left: 0.5rem;
+    margin-left: 0.5rem;
+    box-shadow: inset 5px 0 5px -5px #29627e;
+    font-style: italic;
+    color: #29627e;
+  }
+
+  aside > p {
+    margin: 0.5rem;
+  }
+}

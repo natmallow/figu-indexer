@@ -90,6 +90,19 @@ list($indices, $paginator) = $Indices->getIndices();
                         Create New Index
                     </a>
                 </div>
+
+                <div class="col-12 mt-2 mb-3">
+                    <div class="legend">
+                        <strong>Publications left:</strong>
+                        <div class="more-than-300" style="color: #000;" >more than 300 </div>
+                        <div class="between-101-300" style="color: #000;" >101 - 300</div>
+                        <div class="between-21-100" style="color: #000;" >21 - 100</div>
+                        <div class="between-6-20" style="color: #000;" >6 - 20</div>
+                        <div class="between-1-5" style="color: #000;" >1- 5</div>
+                        <div class="checked"><i class="bx bxs-check-circle"></i> All Caught Up</div>
+                    </div>
+                </div>
+
                 <div class="col mb-3">
                     <div class="d-flex justify-content-start align-items-center gap-2">
                         <?= $paginator->display_pages(); ?>
@@ -108,9 +121,8 @@ list($indices, $paginator) = $Indices->getIndices();
                     <div class="input-group mb-3">
                         <!-- autocomplete="off" -->
                         <input type="text" class="form-control" id="word_search" placeholder="Index search"
-                        value="<?= isset($_GET['filter_alpha']) ? $_GET['filter_alpha'] : '' ?>"
-                        onkeypress="if(event.key === 'Enter'){ wordSearchHandler(); }"
-                        >
+                            value="<?= isset($_GET['filter_alpha']) ? $_GET['filter_alpha'] : '' ?>"
+                            onkeypress="if(event.key === 'Enter'){ wordSearchHandler(); }">
                         <div class="input-group-append">
                             <button id="submitSearch" class="btn btn-outline-secondary" type="button">Search</button>
                             <a href="/gnome/indexer/indices.php?lang=en" class="btn btn-warning" type="button"><i class="bi bi-arrow-clockwise"></i></a>
@@ -133,7 +145,32 @@ list($indices, $paginator) = $Indices->getIndices();
                                         data-bs-toggle="tooltip" data-bs-original-title="Index title and highlight format">
                                         <?= is_null($row["name"]) ? 'needed' : $row["name"]; ?>
                                     </span>
-                                    <a href="./indexlinks.php?index_id=<?= $row["indices_id"] ?>&lang=<?= $lang ?>" class="btn btn-success enf-len">Continue Indexing</a>
+                                    <div>
+
+                                    <?php
+                                        $pIcount = $row["pIcount"];
+                                        $badgeClass = '';
+                                        if ($pIcount > 300) {   
+                                            $badgeClass = 'more-than-300';
+                                        } elseif ($pIcount >= 101 && $pIcount <= 300) {
+                                            $badgeClass = 'between-101-300';
+                                        } elseif ($pIcount >= 21 && $pIcount <= 100) {
+                                            $badgeClass = 'between-21-100';
+                                        } elseif ($pIcount >= 6 && $pIcount <= 20) {
+                                            $badgeClass = 'between-6-20';
+                                        } elseif ($pIcount >= 1 && $pIcount <= 5) {
+                                            $badgeClass = 'between-1-5';
+                                        } else {
+                                            $badgeClass = 'checked';
+                                        }
+                                    ?>
+                                    <!-- badge rounded-pill text-bg-primary" -->
+                                        <span class="<?= $badgeClass ?>" data-bs-toggle="tooltip" data-bs-original-title="Publications left to index">
+                                             <?= $row["pIcount"] ?>
+                                        </span>
+                                        
+                                        <a href="./indexlinks.php?index_id=<?= $row["indices_id"] ?>&lang=<?= $lang ?>" class="btn btn-success enf-len">Continue Indexing</a>
+                                    </div>
                                 </div>
                                 <h6 class="text-muted">Author: <?= $row["ownerName"] ?></h6>
                                 <div class="index-desc">
@@ -255,8 +292,8 @@ list($indices, $paginator) = $Indices->getIndices();
                                 "Content-Type": "application/json"
                             },
                             body: JSON.stringify({
-                                action:'delete-index',
-                                indicesId:`${indicesId}`
+                                action: 'delete-index',
+                                indicesId: `${indicesId}`
                             })
                         });
 
@@ -284,7 +321,7 @@ list($indices, $paginator) = $Indices->getIndices();
             }
         </script>
     <?php endif ?>
-    
+
     <script>
         function toggleText(index) {
             var textContainer = document.getElementById("textContainer" + index);

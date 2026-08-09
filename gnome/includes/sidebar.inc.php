@@ -7,7 +7,9 @@
         ["name"=>"uploads", "url"=> "/gnome/indexer/uploads.php", "role" => ["admin", "user"], "icon"=> "ri-folder-upload-line"],
         ["name"=>"indices", "url"=> "/gnome/indexer/indices.php", "role"  => ["indexer_admin", "indexer_user"], "icon"=> "bx bxs-dice-1"],
         ["name"=>"publication uploader", "url"=> "/gnome/indexer/publications_index.php", "role" => ["indexer_admin", "indexer_user"], "icon"=> "bx bxs-dice-2"],
-        ["name"=>"keywords index", "url"=> "/gnome/indexer/keywords_index.php", "role" => ["indexer_admin", "indexer_user"], "icon"=> "bx bxs-dice-3"]
+        ["name"=>"keywords index", "url"=> "/gnome/indexer/keywords_index.php", "role" => ["indexer_admin", "indexer_user"], "icon"=> "bx bxs-dice-3"],
+        ["name"=>"Spreadsheet", "url"=> "https://docs.google.com/spreadsheets/d/1OjsJ20Fzgchik-TLbEJvQcLkXPsp2aRtcu6B8s7NUwg/edit?gid=1130235143#gid=1130235143", "target"=>"_blank", "role" => ["indexer_admin", "indexer_user"], "icon"=> "bx bxs-dice-4"],
+     
      ];
 ?>
 
@@ -28,7 +30,7 @@
                             }
                     ?>
                     <li class="nav-item">
-                        <a class="nav-link <?=$collape?>" href="<?=$value["url"]?>?lang=<?= lang() ?>">
+                        <a class="nav-link <?=$collape?>" href="<?=$value["url"]?>?lang=<?= lang() ?>" <?php if (isset($value["target"])): ?> target="<?=$value["target"]?>" <?php endif; ?>>
                         <i class="<?=$value["icon"]?>"></i>
                         <span><?=$value["name"]?></span>
                         </a>

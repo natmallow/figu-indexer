@@ -272,8 +272,13 @@ if ($indices_id) {
 
                     <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
                         <li>
-                            <button type="button" data-bs-toggle="tooltip" data-bs-original-title="Main keyword search across publications" class="search-publication-btn dropdown-item">
+                            <button type="button" data-bs-toggle="tooltip" data-bs-original-title="Main keyword search across publications" id="search-publication-btn" class="dropdown-item">
                                 Run Keyword Search
+                            </button>
+                        </li>
+                        <li>
+                            <button type="button" data-bs-toggle="tooltip" data-bs-original-title="Main keyword search across publications" id="bulk-update-btn" class="dropdown-item">
+                                Bulk status update
                             </button>
                         </li>
                         <!-- <li><a class="dropdown-item" href="#">Another action</a></li>
@@ -288,7 +293,7 @@ if ($indices_id) {
     </main>
 
 
-    <!-- pop up dialog start -->
+    <!-- modal for master keyword search -->
     <div class="modal modal-dialog-scrollable modal-lg fade" id="modalMasterKeywordSearch" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="linkIndexModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -314,7 +319,35 @@ if ($indices_id) {
             </div>
         </div>
     </div>
-    <!-- pop up dialog end -->
+    <!-- modal for master keyword search end -->
+
+    <!-- modal for bulk update -->
+    <div class="modal modal-dialog-scrollable modal-lg fade" id="modalBulkUpdate" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="linkIndexModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="modalBulkUpdateLabel">
+                        Bulk Update Publications
+                    </h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="modalBulkUpdateBody">
+                    You are about to update the selected publications.
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+
+                    <button type="button" class="btn btn-primary" id="bulkUpdateProceedButton">Confirm</button>
+
+                    <button class="btn btn-primary d-none" id="submit-btn-load" type="button" disabled>
+                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                        Loading...
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- modal for bulk update end -->
 
 
 
@@ -323,6 +356,7 @@ if ($indices_id) {
     <script>
         // locate modal body
         const keywordSearchModal = $('#modalMasterKeywordSearchBody');
+        const bulkUpdateModalBody = $('#modalBulkUpdateBody');
 
         // this function updates the publication status to inprogress
         const initEditing = (_publication_id, _index_id, _pub_type) => {
@@ -522,38 +556,77 @@ if ($indices_id) {
         }
 
 
+
+
+
         class CheckboxHeader extends HTMLElement {
             constructor() {
                 super();
                 this.innerHTML = `
-                    <div class="custom-header-checkbox">
-                        <input type="checkbox" id="headerCheckbox" />
-                        <label for="headerCheckbox">Select All</label>
-                    </div>`;
+            <div class="custom-header-checkbox">
+                <input type="checkbox" id="headerCheckbox" />
+                <label for="headerCheckbox">Select All</label>
+            </div>`;
             }
 
-            // Initialization and event binding
             init(params) {
                 this.checkbox = this.querySelector('#headerCheckbox');
                 this.params = params;
-                this.checkbox.addEventListener('change', this.onCheckboxChanged.bind(this));
+
+                this.boundChangedHandler = this.onCheckboxChanged.bind(this);
+                this.boundFilterHandler = this.onGridFilterChanged.bind(this);
+
+                this.checkbox.addEventListener('change', this.boundChangedHandler);
+
+                // Listen to ag-Grid's filter changes to update the visual state of the checkbox
+                this.params.api.addEventListener('filterChanged', this.boundFilterHandler);
             }
 
             onCheckboxChanged() {
+                const api = this.params.api;
+
                 if (this.checkbox.checked) {
-                    // Logic to select all rows, for example:
-                    this.params.api.selectAll();
+                    // Select ONLY rows passing the current filter
+                    api.forEachNodeAfterFilter((node) => {
+                        if (!node.group) {
+                            node.setSelected(true);
+                        }
+                    });
                 } else {
-                    // Logic to deselect all rows
-                    this.params.api.deselectAll();
+                    // Uncheck targets everything to prevent hidden selections
+                    api.deselectAll();
                 }
             }
 
-            // Ensure to clean up, especially if you're adding event listeners
+            onGridFilterChanged() {
+                const api = this.params.api;
+                let allVisibleSelected = true;
+                let hasVisibleRows = false;
+
+                // Loop through what is currently visible after the filter
+                api.forEachNodeAfterFilter((node) => {
+                    if (!node.group) {
+                        hasVisibleRows = true;
+                        if (!node.isSelected()) {
+                            allVisibleSelected = false;
+                        }
+                    }
+                });
+
+                // Uncheck if there are no rows visible, or if some visible rows are unselected
+                this.checkbox.checked = hasVisibleRows && allVisibleSelected;
+            }
+
             disconnectedCallback() {
-                this.checkbox.removeEventListener('change', this.onCheckboxChanged.bind(this));
+                if (this.checkbox && this.boundChangedHandler) {
+                    this.checkbox.removeEventListener('change', this.boundChangedHandler);
+                }
+                if (this.params && this.params.api && this.boundFilterHandler) {
+                    this.params.api.removeEventListener('filterChanged', this.boundFilterHandler);
+                }
             }
         }
+
 
         function actionCellRenderer(params) {
             // Assuming `params.data` contains the row data
@@ -627,11 +700,23 @@ if ($indices_id) {
 
         }
 
-        function onSelectionChanged(event) {
-            selectedRows = event.api.getSelectedRows();
-            // console.log(selectedRows);
-        }
 
+        function onSelectionChanged(event) {
+            const api = event.api;
+            const visibleSelectedRows = [];
+
+            // Loop only through rows matching the active filters
+            api.forEachNodeAfterFilter((node) => {
+                if (!node.group && node.isSelected()) {
+                    visibleSelectedRows.push(node.data);
+                }
+            });
+
+            // Update your global/state variable
+            selectedRows = visibleSelectedRows;
+            
+            console.log("Visible Selected Rows:", selectedRows);
+        }
 
 
 
@@ -692,9 +777,9 @@ if ($indices_id) {
                 width: 200,
                 cellStyle: {
                     textAlign: 'left'
-                },                
+                },
                 cellRenderer: (params) => {
-                    
+
                     return `<span title="${params.value}">${params.value}</span>`;
                 }
             },
@@ -830,9 +915,26 @@ if ($indices_id) {
 
 
 
+        bulkUpdateModal = new bootstrap.Modal(document.getElementById('modalBulkUpdate'));
+        document.querySelector("#bulk-update-btn").addEventListener("click", function(e) {
+            e.preventDefault();
+
+            // get the assoiated keyword master list
+            document.getElementById("bulkUpdateProceedButton").disabled = false;
+
+            if (selectedRows?.length > 0) {
+                
+            } else {
+                bulkUpdateModalBody.html(`Check mark the publication(s) to be updated.`)
+                document.getElementById("bulkUpdateProceedButton").disabled = true;
+            }
+
+            bulkUpdateModal.show();
+        });
+
         // pop up       
         keywordModal = new bootstrap.Modal(document.getElementById('modalMasterKeywordSearch'));
-        document.querySelector(".search-publication-btn").addEventListener("click", function(e) {
+        document.querySelector("#search-publication-btn").addEventListener("click", function(e) {
             e.preventDefault();
 
             // get the assoiated keyword master list
@@ -865,14 +967,27 @@ if ($indices_id) {
 
 
         function setFilterStatus(status) {
+            // 1. Reset/Clear all existing selections first
+            gridApi.deselectAll(); 
+
+            // 2. Clear ALL existing filters by passing null, then apply the new one
+            // This ensures no old column filters interfere with the new status filter
             gridApi.setFilterModel({
                 indexing_status: {
+                    filterType: 'text',
                     type: 'equals',
                     filter: status
                 }
             });
-            gridApi.onFilterChanged();
+
+            // 3. Immediately select ONLY the rows matching the new filter
+            gridApi.forEachNodeAfterFilter((node) => {
+                if (!node.group) {
+                    node.setSelected(true);
+                }
+            });
         }
+
 
         function clearFilter() {
             gridApi.setFilterModel(null);

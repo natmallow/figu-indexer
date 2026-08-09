@@ -1,3 +1,12 @@
+.ag-selection-checkbox {
+  --ag-icon-size: 24px !important;
+}
+
+#selectAllChk.cb-header {
+  width: 24px;
+  height: 24px;
+}
+
 /********************************************
                     layout
 *********************************************/
@@ -64,11 +73,52 @@
 /*--------------------------------------------------------------
 # index ledgends
 --------------------------------------------------------------*/
+.more-than-300 {
+  background-color: #8b0000;
+  color: #ffffff;
+  margin-right: 4px;
+  padding: 2px;
+  cursor: pointer;
+}
+
+.between-101-300 {
+  background-color: #bd2929;
+  color: #ffffff;
+  margin-right: 4px;
+  padding: 2px;
+  cursor: pointer;
+}
+
+.between-21-100 {
+  background-color: #8672f1;
+  color: #ffffff;
+  margin-right: 4px;
+  padding: 2px;
+  cursor: pointer;
+}
+
+.between-6-20 {
+  background-color: #4ea8de;
+  color: #000000;
+  margin-right: 4px;
+  padding: 2px;
+  cursor: pointer;
+}
+
+.between-1-5 {
+  background-color: #ffcccb;
+  color: #000000;
+  margin-right: 4px;
+  padding: 2px;
+  cursor: pointer;
+}
+
 .not-started {
   background-color: rgb(255, 255, 255);
 }
 
-.inprogress, .in-progress {
+.inprogress,
+.in-progress {
   background-color: #b6ffb6 !important;
 }
 
@@ -169,11 +219,19 @@
 .legend {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  /* Ensures text and boxes align vertically */
 }
 .legend > div {
   background-color: transparent !important;
   background: none !important;
   display: flex;
+  align-items: center;
+  /* Aligns inner text/icons nicely */
+  gap: 4px;
+}
+.legend {
+  /* Core numeric blocks styling */
 }
 .legend > div.not-started:before {
   content: "";
@@ -225,6 +283,95 @@
   border: 1px solid #000;
   background: linear-gradient(45deg, transparent 45%, red 50%, transparent 55%), linear-gradient(-45deg, transparent 45%, red 50%, transparent 55%);
 }
+.legend > div.more-than-300:before {
+  content: "";
+  width: 24px;
+  height: 24px;
+  border: 1px solid #000;
+  background-color: #8b0000;
+  color: #ffffff;
+  margin-right: 4px;
+  padding: 2px;
+  cursor: pointer;
+}
+.legend > div.between-101-300:before {
+  content: "";
+  width: 24px;
+  height: 24px;
+  border: 1px solid #000;
+  background-color: #bd2929;
+  color: #ffffff;
+  margin-right: 4px;
+  padding: 2px;
+  cursor: pointer;
+}
+.legend > div.between-21-100:before {
+  content: "";
+  width: 24px;
+  height: 24px;
+  border: 1px solid #000;
+  background-color: #8672f1;
+  color: #ffffff;
+  margin-right: 4px;
+  padding: 2px;
+  cursor: pointer;
+}
+.legend > div.between-6-20:before {
+  content: "";
+  width: 24px;
+  height: 24px;
+  border: 1px solid #000;
+  background-color: #4ea8de;
+  color: #000000;
+  margin-right: 4px;
+  padding: 2px;
+  cursor: pointer;
+}
+.legend > div.between-1-5:before {
+  content: "";
+  width: 24px;
+  height: 24px;
+  border: 1px solid #000;
+  background-color: #ffcccb;
+  color: #000000;
+  margin-right: 4px;
+  padding: 2px;
+  cursor: pointer;
+}
+.legend {
+  /* FIX: Apply the same square box rule to checked, just like everything else */
+}
+.legend > div.checked:before {
+  content: "";
+  width: 24px;
+  height: 24px;
+  border: 1px solid #000;
+  background-color: #ffffff !important;
+  content: none;
+  /* Keeps the square spacer logic, but lets the real Font Awesome icon handle the visual layout */
+  display: none;
+  /* Hide the empty pseudo-element since the real <i> tag is our block now */
+}
+.legend {
+  /* Segment 5: Square styling for the real Font Awesome Icon */
+}
+.legend > div.checked .bxs-check-circle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* Inheriting exact dimensions and border from your legend-before rule */
+  width: 24px;
+  height: 24px;
+  border: 1px solid #000;
+  margin-right: 4px;
+  /* Matches layout separation */
+  background-color: #ffffff !important;
+  /* Soft Light Blue background */
+  color: #2876e4;
+  /* Deep contrast blue for the check icon */
+  font-size: 24px;
+  /* Size of checkmark icon inside the box */
+}
 .legend > div > button {
   padding: 0px !important;
 }
@@ -240,8 +387,10 @@
 }
 
 .text-container {
-  max-height: 4em; /* Initial height for collapsed state */
-  min-height: 4em; /* Ensure at least three lines are shown */
+  max-height: 4em;
+  /* Initial height for collapsed state */
+  min-height: 4em;
+  /* Ensure at least three lines are shown */
   overflow: hidden;
   position: relative;
   transition: max-height 0.5s ease;
@@ -253,8 +402,10 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: 1em; /* Height of the gradient effect */
-  background: linear-gradient(to bottom, transparent, white); /* Gradient to white */
+  height: 1em;
+  /* Height of the gradient effect */
+  background: linear-gradient(to bottom, transparent, white);
+  /* Gradient to white */
 }
 
 .nat.card-header {
@@ -283,8 +434,10 @@
 .sticky-sub {
   position: sticky;
   top: 60px;
-  height: auto !important; /* Forces the box to size itself to the content */
-  max-height: none !important; /* Erases any restrictive maximum heights */
+  height: auto !important;
+  /* Forces the box to size itself to the content */
+  max-height: none !important;
+  /* Erases any restrictive maximum heights */
 }
 
 .dropdown-menu {
@@ -366,8 +519,10 @@ tr {
 }
 
 .wide-popover {
-  --bs-popover-max-width: 402px; /* Adjust this value as needed */
-  max-width: 402px; /* Ensure the popover does not exceed this width */
+  --bs-popover-max-width: 402px;
+  /* Adjust this value as needed */
+  max-width: 402px;
+  /* Ensure the popover does not exceed this width */
 }
 
 /********************************************
@@ -499,6 +654,21 @@ ul.pagination {
   margin-bottom: 10px;
 }
 
+.initializer {
+  padding: 42px 10px 0px 10px;
+  text-align: center;
+  background-color: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  position: absolute;
+  z-index: 1025;
+  width: 100%;
+  height: 100%;
+}
+
+.section:has(.initializer) {
+  position: relative;
+}
+
 .meta-section {
   border-radius: 6px;
   background-color: rgba(181, 159, 255, 0.637);
@@ -579,17 +749,24 @@ ul.pagination {
 
 .enf-len {
   min-width: max-content;
-  overflow: hidden; /* Hide text that goes beyond the element's width */
-  text-overflow: ellipsis; /* Add ellipsis at the end of the truncated text */
+  overflow: hidden;
+  /* Hide text that goes beyond the element's width */
+  text-overflow: ellipsis;
+  /* Add ellipsis at the end of the truncated text */
   display: inline-block;
 }
 
 .smooth-span {
-  white-space: nowrap; /* Keep text in a single line */
-  overflow: hidden; /* Hide text that goes beyond the element's width */
-  text-overflow: ellipsis; /* Add ellipsis at the end of the truncated text */
-  max-width: 75%; /* Adjust this as needed for your layout */
-  display: inline-block; /* Ensures the span behaves like a block for width purposes */
+  white-space: nowrap;
+  /* Keep text in a single line */
+  overflow: hidden;
+  /* Hide text that goes beyond the element's width */
+  text-overflow: ellipsis;
+  /* Add ellipsis at the end of the truncated text */
+  max-width: 75%;
+  /* Adjust this as needed for your layout */
+  display: inline-block;
+  /* Ensures the span behaves like a block for width purposes */
   line-height: 34px;
 }
 
@@ -626,10 +803,14 @@ ul.pagination {
 /* GEN */
 /***************************/
 .unselectable-text {
-  -webkit-user-select: none; /* Safari */
-  -moz-user-select: none; /* Firefox */
-  -ms-user-select: none; /* Internet Explorer/Edge */
-  user-select: none; /* Standard syntax for Chrome, Opera, and others */
+  -webkit-user-select: none;
+  /* Safari */
+  -moz-user-select: none;
+  /* Firefox */
+  -ms-user-select: none;
+  /* Internet Explorer/Edge */
+  user-select: none;
+  /* Standard syntax for Chrome, Opera, and others */
 }
 
 /***************************/
@@ -655,6 +836,17 @@ ul.pagination {
 .cb-header {
   width: 16px;
   height: 16px;
+}
+
+.indexer aside {
+  padding-left: 0.5rem;
+  margin-left: 0.5rem;
+  box-shadow: inset 5px 0 5px -5px #29627e;
+  font-style: italic;
+  color: #29627e;
+}
+.indexer aside > p {
+  margin: 0.5rem;
 }
 
 /*# sourceMappingURL=custom.css.map */
