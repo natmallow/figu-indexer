@@ -234,7 +234,7 @@ class PublicationIndex extends DBConnection
             PI.summary,
             PI.notes,
             PI.tracks
-    ";
+       ";
 
         $stmt = $this->dbc->prepare($sql);
 
@@ -811,5 +811,42 @@ class PublicationIndex extends DBConnection
         $stmt = null;
 
         return $insertId;
+    }
+
+    function bulkUpdate(
+        int $indices_id,
+        array $publication_ids,
+        string $publication_status = 'Not Started'
+    ): int {
+        if (empty($publication_ids)) {
+            return 0;
+        }
+
+        $values = [];
+        $params = [];
+
+        foreach (array_values($publication_ids) as $index => $publication_id) {
+            $values[] = "(:indices_id_{$index}, :publication_id_{$index}, :publication_status_{$index})";
+
+            $params[":indices_id_{$index}"] = $indices_id;
+            $params[":publication_id_{$index}"] = $publication_id;
+            $params[":publication_status_{$index}"] = $publication_status;
+        }
+
+        $sql = "
+            INSERT INTO publication_index (
+                indices_id,
+                publication_id,
+                publication_index_status
+            )
+            VALUES " . implode(', ', $values) . "
+            ON DUPLICATE KEY UPDATE
+                publication_index_status = publication_index_status
+        ";
+
+        $stmt = $this->dbc->prepare($sql);
+        $stmt->execute($params);
+
+        return $stmt->rowCount();
     }
 }

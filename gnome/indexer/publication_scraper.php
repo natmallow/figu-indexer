@@ -167,6 +167,10 @@ if (isset($_POST['scrapeRules'], $_POST['url'], $_POST['publication_id'])) {
                             <input class="form-check-input" type="radio" id="FOMK" name="scrapeRules" value="FOMK" checked="checked">
                             <label class="form-check-label" for="FOMK">Future Of Mankind</label><br>
                         </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" id="YOUTUBE" name="scrapeRules" value="YOUTUBE" checked="checked">
+                            <label class="form-check-label" for="YOUTUBE">YouTube</label><br>
+                        </div>                        
                     </div>
                     <div class="mb-3">
                         <label for="url" class=""><strong>Target URL</strong></label>

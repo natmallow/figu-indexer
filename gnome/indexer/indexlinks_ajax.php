@@ -50,7 +50,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $AjaxHandler = new AjaxResponseHandler($IndicesKeywordService);
             echo $AjaxHandler->runAjax("masterKeywordSearchStatus", [$indices_id, $last_checked])->getResponse();
             exit();
-        } 
+        } elseif ($data['action'] == "run-bulk-update") {
+            $indices_id = filter_var($data['indices_id'] ?? null, FILTER_VALIDATE_INT);
+            $publication_ids = $data['publication_ids'];
+            $publication_status = $data['publication_status'] ?? 'Not Started';
+
+            $AjaxHandler = new AjaxResponseHandler($PublicationIndex);
+            echo $AjaxHandler->runAjax("bulkUpdate", [$indices_id, $publication_ids, $publication_status])->getResponse();
+            exit();
+        }
         
         elseif ($data['action'] == "run-master-keyword-search") {
             // Add the indices_id and publication_ids variables

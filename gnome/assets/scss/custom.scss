@@ -1030,3 +1030,13 @@ ul {
     margin: 0.5rem;
   }
 }
+
+.main-alerts {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+
+  &:last-child {
+    margin-bottom: 0;
+  }  
+}

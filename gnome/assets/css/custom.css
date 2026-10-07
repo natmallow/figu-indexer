@@ -849,4 +849,13 @@ ul.pagination {
   margin: 0.5rem;
 }
 
+.main-alerts {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+.main-alerts:last-child {
+  margin-bottom: 0;
+}
+
 /*# sourceMappingURL=custom.css.map */

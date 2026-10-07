@@ -17,6 +17,7 @@ $is_locked = '';
 $is_reset_password = '';
 $is_activated = '';
 $reason = '';
+$roles = '[]';
 
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -134,10 +135,17 @@ $availableRoles = $Role->getRoles();
 
                             <select class="form-select form-select-sm text-end" size="7" multiple aria-label="multiple select example" id="select1">
                                 <?php
-                                $activeRoles = [];
-                                $isSuperAdmin = false;
-                                foreach ($availableRoles as $row) :
-                                    if (in_array($row["role_name"], json_decode($roles))) :
+                                    $activeRoles = [];
+                                    $isSuperAdmin = false;
+
+                                    $decodedRoles = json_decode($roles ?? '[]', true);
+
+                                    if (!is_array($decodedRoles)) {
+                                        $decodedRoles = [];
+                                    }
+
+                                    foreach ($availableRoles as $row) :
+                                        if (in_array($row["role_name"], $decodedRoles, true)) :
                                         if ($row["role_name"] == 'super_admin') {
                                             $isSuperAdmin = true;
                                         } else {

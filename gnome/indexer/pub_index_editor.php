@@ -663,8 +663,22 @@ if (!is_null($pub_type)) {
         });
 
 
-        function escapeRegExp(str) {
-            return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        function escapeRegExp(value) {
+            if (typeof value !== 'string' || value.length === 0) return '';
+
+            return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+
+        function parseJsonArray(value) {
+            if (!value) return [];
+
+            try {
+                const parsedValue = JSON.parse(value);
+                return Array.isArray(parsedValue) ? parsedValue : [];
+            } catch (error) {
+                console.error('Unable to parse JSON array.', error);
+                return [];
+            }
         }
 
 
@@ -680,7 +694,7 @@ if (!is_null($pub_type)) {
                 success: function(resp) {
                     spinnerRemove('keywords_tab');
                     console.log('Post operation complete')
-                    if (callback != '') {
+                    if (typeof callback === 'function') {
                         callback(resp);
                     }
                 },
@@ -722,10 +736,20 @@ if (!is_null($pub_type)) {
 
 
                 // selects the keywords in the main document 
-                const keyWords = JSON.parse(document.querySelector('#keywordBlock').value);
+                const keywordBlock = document.querySelector('#keywordBlock');
+                if (!keywordBlock || !this.node) return;
+
+                const keyWords = parseJsonArray(keywordBlock.value).filter(
+                    word => word &&
+                        word.id != null &&
+                        typeof word.value === 'string' &&
+                        word.value.trim().length > 0
+                );
 
                 // orders the array by value length
-                const orderedKeyValues = keyWords.sort((a, b) => b.value.length - a.value.length);
+                const orderedKeyValues = keyWords.sort(
+                    (a, b) => String(b?.value ?? '').length - String(a?.value ?? '').length
+                );
 
 
 
@@ -737,10 +761,10 @@ if (!is_null($pub_type)) {
             keywordFocus(keywordId = null, navBarHeight = 61) {
 
                 // Adjust this value as needed to position the element correctly in the viewport
-                const offset =  document.getElementById('stickySub').getBoundingClientRect().height + navBarHeight || 320; 
+                if (keywordId === null || !publicationContainer) return;
 
-                // console.log(keywordId);
-                if (keywordId === null) return;
+                const stickySub = document.getElementById('stickySub');
+                const offset = (stickySub?.getBoundingClientRect().height ?? 259) + navBarHeight;
 
                 const scrollInView = () => {
 
@@ -782,53 +806,54 @@ if (!is_null($pub_type)) {
 
             toggleVisibility(bool) {
                 document.querySelectorAll('k-word').forEach((kWordElement) => {
-                    kWordElement.toggle(); // Call the toggle method on each instance
+                    if (typeof kWordElement.toggle === 'function') {
+                        kWordElement.toggle(bool);
+                    }
                 });
             }
 
             highlightWords(words) {
 
-                // console.log(words)
+                if (!this.node || !Array.isArray(words)) return;
 
-                // Get all text nodes in the node
-                // seems wasteful but a new object must be created for each word search this is because the reference breaks
-                // this causes alot of momentary over head
-                this.textNodes = this.getTextNodes(this.node);
+                words.forEach(word => {
+                    if (!word || word.id == null || typeof word.value !== 'string' || word.value.length === 0) return;
 
-                // Loop through each text node
-                this.textNodes.forEach(textNode => {
-                    // Loop through each word
-                    words.forEach(word => {
-                        // Create a regular expression for the word
-                        const regex = new RegExp(`\\b${escapeRegExp(word.value)}\\b`, 'gi');
+                    const regex = new RegExp(`\\b${escapeRegExp(word.value)}\\b`, 'giu');
+                    const textNodes = this.getTextNodes(this.node).filter(
+                        textNode => !textNode.parentElement?.closest(this.wrapperTag)
+                    );
+                    let foundMatch = false;
 
-                        // Find all matches of the word in the text node
+                    textNodes.forEach(textNode => {
+                        const text = textNode.nodeValue ?? '';
+                        const fragment = document.createDocumentFragment();
+                        let lastIndex = 0;
                         let match;
-                        while ((match = regex.exec(textNode.nodeValue)) !== null) {
-                            console.log(match[0])
-                            // prevents nesting of wrapperTag (k-word) element
-                            if (textNode.parentNode.tagName.toLowerCase() === this.wrapperTag) continue;
 
-                            document.getElementById(`chip-keyword-${word.id}`).classList.remove("--nf");
+                        regex.lastIndex = 0;
+                        while ((match = regex.exec(text)) !== null) {
+                            foundMatch = true;
+                            fragment.append(document.createTextNode(text.slice(lastIndex, match.index)));
 
                             const wordNode = document.createElement(this.wrapperTag);
                             wordNode.setAttribute(this.attrWord, word.value.toLowerCase());
                             wordNode.setAttribute(this.attrWordId, word.id);
                             wordNode.textContent = match[0];
+                            fragment.append(wordNode);
 
-                            // Replace the matched text with the wrapped element
-                            const startIndex = match.index;
-                            const endIndex = match.index + match[0].length;
-                            const range = document.createRange();
-                            range.setStart(textNode, startIndex);
-                            range.setEnd(textNode, endIndex);
-                            range.deleteContents();
-                            range.insertNode(wordNode);
-
-                            // Move the start index to after the wrapped element
-                            regex.lastIndex = startIndex + wordNode.textContent.length;
+                            lastIndex = match.index + match[0].length;
                         }
+
+                        if (lastIndex === 0) return;
+
+                        fragment.append(document.createTextNode(text.slice(lastIndex)));
+                        textNode.parentNode?.replaceChild(fragment, textNode);
                     });
+
+                    if (foundMatch) {
+                        document.getElementById(`chip-keyword-${word.id}`)?.classList.remove('--nf');
+                    }
                 });
             }
 
@@ -837,14 +862,17 @@ if (!is_null($pub_type)) {
 
                 // use event.target instead of e.target for consistency with event parameter name
                 const s = window.getSelection();
+                if (!s || s.rangeCount === 0 || !s.anchorNode || s.anchorNode.nodeType !== Node.TEXT_NODE) return;
+
                 const range = s.getRangeAt(0);
                 const node = s.anchorNode;
-                const keyWords = document.querySelector('#keywordBlock').value;
 
                 // const nodemain = document.querySelector('#publication_container');
 
                 const clickedWord = event.target;
                 const wrapperTag = 'k-word';
+
+                if (!(clickedWord instanceof Element)) return;
 
                 // use early return instead of if statement with empty body
                 if (clickedWord.tagName.toLowerCase() === wrapperTag) return;
@@ -912,9 +940,11 @@ if (!is_null($pub_type)) {
                 // const word = event.target.dataset.word;
                 const wordId = event.target.dataset.keywordId;
                 // check if keyword is locked
-                const isLocked = document.getElementById('keywordBlock').value
-                    ? JSON.parse(document.getElementById('keywordBlock').value).find(word => word.id == wordId)?.locked
-                    : false;
+                if (!wordId) return;
+
+                const keywordBlock = document.getElementById('keywordBlock');
+                const isLocked = parseJsonArray(keywordBlock?.value)
+                    .find(word => word.id == wordId)?.locked ?? false;
 
                 if (isLocked) {
                     alert("This keyword is part of the master keyword list and cannot be removed here.");
@@ -926,26 +956,25 @@ if (!is_null($pub_type)) {
 
 
             runAddKeyword(newWord = null) {
-                if (document.querySelector(`#addkeywords`).value.trim() == '' && newWord === null) {
-                    return;
-                }
-                spinnerAdd('keywords_tab');
+                const addKeywordsInput = document.querySelector('#addkeywords');
+                if (!addKeywordsInput && newWord === null) return;
+
                 const action = 'addKeyword';
                 const publication_index_id = publicationIndexId;
                 // what action to take
-                const newKeyWord = (newWord === null) ? $('#addkeywords').val() : newWord;
+                const newKeyWord = String(newWord === null ? addKeywordsInput.value : newWord).trim();
                 const jsonData = {
                     action,
                     publication_index_id,
                     newKeyWord
                 };
 
-                if (jsonData.newKeyWord.trim() == '') {
-                    return;
-                }
+                if (!jsonData.newKeyWord) return;
+
+                spinnerAdd('keywords_tab');
 
                 // clears the input box
-                document.querySelector(`#addkeywords`).value = '';
+                if (addKeywordsInput) addKeywordsInput.value = '';
                 this.ajax(jsonData, this.keywordAddResponseHandler)
             }
 
@@ -958,34 +987,49 @@ if (!is_null($pub_type)) {
 
                 // Assuming attachEvent is defined elsewhere and correctly attaches events
                 const keywordBlock = document.getElementById('keywordBlock');
-                let keywords = keywordBlock.value ? JSON.parse(keywordBlock.value) : [];
+                const responseKeywords = Array.isArray(response?.keywords) ? response.keywords : [];
+                const keywordsContainer = document.getElementById("keywordChips");
+                if (!keywordBlock || !keywordsContainer || responseKeywords.length === 0) return;
 
-                keywords.push(...response.keywords);
+                let keywords = parseJsonArray(keywordBlock.value);
+
+                keywords.push(...responseKeywords);
                 keywordBlock.value = JSON.stringify(keywords);
 
-                const keywordsContainer = document.getElementById("keywordChips");
-                let htmlToAdd = "";
+                const newKeywordChips = document.createDocumentFragment();
 
                 // Json to HTML mapping
-                response.keywords.forEach((item) => {
+                responseKeywords.forEach((item) => {
                     // Skip if the chip already exists
-                    if (document.getElementById(`chip-keyword-${item.id}`)) {
+                    if (!item?.id || typeof item.value !== 'string' || document.getElementById(`chip-keyword-${item.id}`)) {
                         return; 
                     }
 
-                    htmlToAdd += `<div class="chip new-meta" id="chip-keyword-${item.id}" data-chip-val="${item.value}">
-                        <i class="bi bi-menu-button-wide-fill meta-control"
-                           data-keyword-id="${item.id}" 
-                           data-selected-meta=""></i>
-                           <span class="word-jump">${item.value}</span>
-                        <span class="closebtn" data-publication-index-id="${response.publication_index_id}" data-keyword-id="${item.id}">&times;</span>
-                      </div>`;
+                    const keywordChip = document.createElement('div');
+                    keywordChip.className = 'chip new-meta';
+                    keywordChip.id = `chip-keyword-${item.id}`;
+                    keywordChip.dataset.chipVal = item.value;
+
+                    const metaControl = document.createElement('i');
+                    metaControl.className = 'bi bi-menu-button-wide-fill meta-control';
+                    metaControl.dataset.keywordId = item.id;
+                    metaControl.dataset.selectedMeta = '';
+
+                    const wordJump = document.createElement('span');
+                    wordJump.className = 'word-jump';
+                    wordJump.textContent = item.value;
+
+                    const closeButton = document.createElement('span');
+                    closeButton.className = 'closebtn';
+                    closeButton.dataset.publicationIndexId = response.publication_index_id ?? '';
+                    closeButton.dataset.keywordId = item.id;
+                    closeButton.innerHTML = '&times;';
+
+                    keywordChip.append(metaControl, wordJump, closeButton);
+                    newKeywordChips.append(keywordChip);
                 });
 
-                // Convert the string to HTML nodes and prepend them all at once
-                const range = document.createRange();
-                const documentFragment = range.createContextualFragment(htmlToAdd);
-                keywordsContainer.prepend(documentFragment);
+                keywordsContainer.prepend(newKeywordChips);
 
                 // Attach click events to close buttons and meta-controls
                 document.querySelectorAll("#keywordsContainer .new-meta").forEach(keywordChip => {
@@ -993,7 +1037,10 @@ if (!is_null($pub_type)) {
                     keywordChip.classList.remove('new-meta');
 
                     // check to see if word exists on the page if not add --nf class to gray out the chip
-                    const wordOnPage = publicationContainer.querySelector(`[data-word-val="${keywordChip.dataset.chipVal.toLowerCase()}"]`);
+                    const chipValue = keywordChip.dataset.chipVal?.toLowerCase();
+                    const wordOnPage = chipValue
+                        ? publicationContainer?.querySelector(`[data-word-val="${CSS.escape(chipValue)}"]`)
+                        : null;
                     if (!wordOnPage) {
                         keywordChip.classList.add("--nf");
                     }
@@ -1015,7 +1062,9 @@ if (!is_null($pub_type)) {
                 });
 
                 // order value from the response rs ensures correct highlighting 
-                const orderedKeyValues = response.keywords.sort((a, b) => b.value.length - a.value.length);
+                const orderedKeyValues = [...responseKeywords].sort(
+                    (a, b) => String(b?.value ?? '').length - String(a?.value ?? '').length
+                );
 
                 // highlight keywords on page
                 orderedKeyValues.forEach(word => {
@@ -1028,10 +1077,13 @@ if (!is_null($pub_type)) {
 
                 // check if tracks are visible
                 if (!showSelectedKeywords()) {
-                    document.getElementById('keywords-show').checked = true;
+                    const keywordsShow = document.getElementById('keywords-show');
+                    if (keywordsShow) keywordsShow.checked = true;
                     this.toggleVisibility(true)
                     return;
                 }
+
+                if (!(event.target instanceof Element)) return;
 
                 if (event.target.tagName.toLowerCase() == this.wrapperTag) {
                     this._removeKeyword(event);
@@ -1045,6 +1097,8 @@ if (!is_null($pub_type)) {
                 const textNodes = [];
 
                 function getTextNodesHelper(node) {
+                    if (!node) return;
+
                     if (node.nodeType === Node.TEXT_NODE) {
                         textNodes.push(node);
                     } else {
@@ -1061,10 +1115,14 @@ if (!is_null($pub_type)) {
 
             keywordRemoveResponseHandler(response) {
 
-                const keyword_id = response.keyword_id;
+                const keyword_id = response?.keyword_id;
+                if (!keyword_id) return;
+
                 // remove json reference
-                const keyValObj = document.querySelector('#keywordBlock').value;
-                let keyVals = JSON.parse(keyValObj);
+                const keywordBlock = document.querySelector('#keywordBlock');
+                if (!keywordBlock) return;
+
+                let keyVals = parseJsonArray(keywordBlock.value);
 
                 for (let i = 0; i < keyVals.length; ++i) {
                     if (keyVals[i].id == keyword_id) {
@@ -1073,19 +1131,19 @@ if (!is_null($pub_type)) {
                     }
                 }
 
-                document.querySelector('#keywordBlock').value = JSON.stringify(keyVals);
+                keywordBlock.value = JSON.stringify(keyVals);
 
                 // removes gray chip
                 const keyword = document.querySelector(`#chip-keyword-${keyword_id}`)
-                keyword.remove();
+                keyword?.remove();
 
                 // removes k-word
                 const wordNodes = document.querySelectorAll(`[data-keyword-id="${keyword_id}"]`);
                 wordNodes.forEach(wordNode => {
                     const textNode = document.createTextNode(wordNode.textContent);
-                    wordNode.parentNode.replaceChild(textNode, wordNode);
-                    // joins all parent nodes
-                    wordNode?.parentNode?.normalize();
+                    const parentNode = wordNode.parentNode;
+                    parentNode?.replaceChild(textNode, wordNode);
+                    parentNode?.normalize();
                 });
             }
 
@@ -1103,7 +1161,7 @@ if (!is_null($pub_type)) {
         }
 
         const Highlighter = new KeywordHighlighter(publicationContainer, ajaxPost)
-        Highlighter.initKeywords();
+        if (publicationContainer) Highlighter.initKeywords();
     </script>
     <script>
         // radio buttons that select the function to be used
@@ -1112,10 +1170,10 @@ if (!is_null($pub_type)) {
         // array of event listeners stored as objects
         let eventListeners = [];
 
-        const showTrackNumbers = () => document.querySelector('#toggle-visability').checked;
-        const showSelectedTracks = () => document.querySelector('#tracks-show').checked;
-        const showSelectedKeywords = () => document.querySelector('#keywords-show').checked;
-        const selectedAction = () => document.querySelector('input[name = "activeState"]:checked').value; // "none" | "tracks" | "keywords"
+        const showTrackNumbers = () => document.querySelector('#toggle-visability')?.checked ?? false;
+        const showSelectedTracks = () => document.querySelector('#tracks-show')?.checked ?? false;
+        const showSelectedKeywords = () => document.querySelector('#keywords-show')?.checked ?? false;
+        const selectedAction = () => document.querySelector('input[name = "activeState"]:checked')?.value ?? 'selectOff';
 
 
 
@@ -1133,6 +1191,8 @@ if (!is_null($pub_type)) {
         }
 
         function addListener(node, event, handler) {
+            if (!(node instanceof EventTarget) || typeof handler !== 'function') return;
+
             node.addEventListener(event, handler);
             eventListeners.push({
                 node,
@@ -1188,6 +1248,8 @@ if (!is_null($pub_type)) {
          */
         const updateDropdownColor = () => {
             const select = document.getElementById('publication_status');
+            if (!(select instanceof HTMLSelectElement) || select.selectedIndex < 0) return;
+
             const selectedOption = select.options[select.selectedIndex];
             select.className = selectedOption.className + ' form-select';
         }
@@ -1197,7 +1259,7 @@ if (!is_null($pub_type)) {
          * Hides or shows keywords
          */
         const filterKeywordsHandler = (e) => {
-            const filter = e.value;
+            const filter = e?.value ?? '';
             const chips = [
                 ...document.querySelectorAll('#keywordChips div.chip')
             ]
@@ -1217,13 +1279,14 @@ if (!is_null($pub_type)) {
          */
         const showMetaHandler = (checkbox) => {
 
+            if (!(checkbox instanceof HTMLInputElement)) return;
+
             if (!checkbox.checked) {
 
                 for (const sheet of document.styleSheets) {
                     if (sheet.title === 'metaCss') {
                         // return sheet;
-                        sheet.deleteRule(0);
-                        sheet.insertRule("[class*=sub-meta-] { display:none}", 0);
+                        replaceStyleRule(sheet, 0, "[class*=sub-meta-] { display:none}");
                     }
                 }
 
@@ -1231,8 +1294,7 @@ if (!is_null($pub_type)) {
                 for (const sheet of document.styleSheets) {
                     if (sheet.title === 'metaCss') {
                         // return sheet;
-                        sheet.deleteRule(0);
-                        sheet.insertRule("[class*=sub-meta-] { display:block}", 0);
+                        replaceStyleRule(sheet, 0, "[class*=sub-meta-] { display:block}");
                     }
                 }
             }
@@ -1242,6 +1304,8 @@ if (!is_null($pub_type)) {
          * Shows keywords that are in the publication only 
          */
         const filterReferenceKeywordHandler = (checkbox) => {
+
+            if (!(checkbox instanceof HTMLInputElement)) return;
 
             const notFoundKeywords = document.querySelectorAll('.--nf');
             if (!checkbox.checked) {
@@ -1257,13 +1321,14 @@ if (!is_null($pub_type)) {
          */
         const filterMetaOnlyHandler = (checkbox) => {
 
+            if (!(checkbox instanceof HTMLInputElement)) return;
+
             if (!checkbox.checked) {
 
                 for (const sheet of document.styleSheets) {
                     if (sheet.title === 'metaCss') {
                         // return sheet;
-                        sheet.deleteRule(1);
-                        sheet.insertRule(".chip:not(:has(li)){ display: none;}", 1);
+                        replaceStyleRule(sheet, 1, ".chip:not(:has(li)){ display: none;}");
                     }
                 }
 
@@ -1271,12 +1336,20 @@ if (!is_null($pub_type)) {
                 for (const sheet of document.styleSheets) {
                     if (sheet.title === 'metaCss') {
                         // return sheet;
-                        sheet.deleteRule(1);
-                        sheet.insertRule(".chip:not(:has(li)){ display: inline-block;}", 1);
+                        replaceStyleRule(sheet, 1, ".chip:not(:has(li)){ display: inline-block;}");
                     }
                 }
             }
         }
+
+        const replaceStyleRule = (sheet, index, rule) => {
+            try {
+                if (sheet.cssRules.length > index) sheet.deleteRule(index);
+                sheet.insertRule(rule, Math.min(index, sheet.cssRules.length));
+            } catch (error) {
+                console.error('Unable to update display rule.', error);
+            }
+        };
 
         /**
          * Closes the modal
@@ -1316,6 +1389,8 @@ if (!is_null($pub_type)) {
          */
         const isInViewport = function(elem, offSets = [0, 0, 0, 0]) {
 
+            if (!(elem instanceof Element)) return false;
+
             const bounding = elem.getBoundingClientRect();
             return (
                 bounding.top + offSets[0] >= 0 &&
@@ -1327,21 +1402,22 @@ if (!is_null($pub_type)) {
 
 
         const bubbler = (ele) => {
-            let eleArr = ele.id.match(/track_\d+_\d+\-(?:en|de)/gm);
-            let topEle = ele.id.search(/publication_container/gm);
-            if (topEle != -1) {
-                return false;
-            } else if (!eleArr) {
-                return bubbler(ele.parentNode);
+            let currentElement = ele instanceof Element ? ele : ele?.parentElement;
+
+            while (currentElement && currentElement !== publicationContainer) {
+                const trackIds = currentElement.id?.match(/track_\d+_\d+-(?:en|de)/g);
+                if (trackIds) return trackIds;
+                currentElement = currentElement.parentElement;
             }
-            return eleArr;
+
+            return false;
         }
 
         const tracksHighlighter = (action = true) => {
 
             // get the tracks in from the input box
-            const tracks = $('#track').val();
-            if (tracks == '') return;
+            const tracks = document.getElementById('track')?.value ?? '';
+            if (!tracks) return;
             const tracksArr = tracks.split(',');
 
             if (action) {
@@ -1349,8 +1425,8 @@ if (!is_null($pub_type)) {
                     try {
                         let engTxt = document.getElementById(`${item}en`);
                         let gerTxt = document.getElementById(`${item}de`);
-                        engTxt.classList.add('highlighter');
-                        gerTxt.classList.add('highlighter');
+                        engTxt?.classList.add('highlighter');
+                        gerTxt?.classList.add('highlighter');
                     } catch (error) {
                         console.log(`${item} does not seem to be present `, error)
                     }
@@ -1363,19 +1439,25 @@ if (!is_null($pub_type)) {
         }
 
         const trackRemove = (track) => {
-            let sentence = $('#track').val();
+            const trackInput = document.getElementById('track');
+            if (!trackInput) return;
+
+            let sentence = trackInput.value;
             let sentenceNew = sentence.replace(track, '');
             const rtnStr = sentenceNew.replace(/^[,]/, '').replace(/[,]+/g, ',')
             // sentenceNew = sentenceNew.match(/^[.,:!?]/) == true ? sentence :  ;
-            $('#track').val(rtnStr);
+            trackInput.value = rtnStr;
         }
 
         const trackAdd = (track) => {
-            let sentence = $('#track').val();
+            const trackInput = document.getElementById('track');
+            if (!trackInput) return;
+
+            let sentence = trackInput.value;
             if (sentence.trim().length <= 1) {
-                $('#track').val(track)
+                trackInput.value = track;
             } else {
-                $('#track').val((sentence + ',' + track).replace(/[,]+/g, ','));
+                trackInput.value = (sentence + ',' + track).replace(/[,]+/g, ',');
             }
         }
 
@@ -1383,8 +1465,9 @@ if (!is_null($pub_type)) {
 
             // check if tracks are visible
             if (!showSelectedTracks()) {
-                document.getElementById('tracks-show').checked = true;
-                tracksHighlighter(this.checked)
+                const tracksShow = document.getElementById('tracks-show');
+                if (tracksShow) tracksShow.checked = true;
+                tracksHighlighter(true)
                 return;
             }
 
@@ -1406,8 +1489,11 @@ if (!is_null($pub_type)) {
                 const startIndex = ALLTRACKIDS.indexOf(startValue + tracksLang[0]);
                 const endIndex = ALLTRACKIDS.indexOf(endValue + tracksLang[0]);
 
+                if (startIndex < 0 || endIndex < 0) return;
+
                 for (let i = startIndex; i <= endIndex; i++) {
-                    let trackPush = ALLTRACKIDS[i].slice(0, -2);
+                    let trackPush = ALLTRACKIDS[i]?.slice(0, -2);
+                    if (!trackPush) continue;
                     tracks.push(trackPush);
                 }
 
@@ -1431,14 +1517,14 @@ if (!is_null($pub_type)) {
             if (isHighlighted === true) {
                 for (let i = 0; i < uniqueTracks.length; i++) {
                     tracksLang.forEach(lang => {
-                        document.getElementById(`${uniqueTracks[i]}${lang}`).classList.remove('highlighter');
+                        document.getElementById(`${uniqueTracks[i]}${lang}`)?.classList.remove('highlighter');
                     })
                     trackRemove(uniqueTracks[i]);
                 }
             } else {
                 for (let i = 0; i < uniqueTracks.length; i++) {
                     tracksLang.forEach(lang => {
-                        document.getElementById(`${uniqueTracks[i]}${lang}`).classList.add('highlighter');
+                        document.getElementById(`${uniqueTracks[i]}${lang}`)?.classList.add('highlighter');
                     })
                     trackAdd(uniqueTracks[i]);
                 }
@@ -1450,11 +1536,10 @@ if (!is_null($pub_type)) {
 
 
         function getAbsPosition(element) {
-            let parentOffset = $('#dragable_modal').offset();
-            let position = $(element).position();
-            let height = $(element).height();
-            let xPos = position.left // - parentOffset.left;
-            let yPos = position.top + height // - parentOffset.top;
+            if (!(element instanceof HTMLElement)) return null;
+
+            const xPos = element.offsetLeft;
+            const yPos = element.offsetTop + element.offsetHeight;
             return {
                 x: xPos,
                 y: yPos
@@ -1472,8 +1557,8 @@ if (!is_null($pub_type)) {
          *                        This parameter is not used in the function definition and 
          *                        could be removed to avoid confusion.
          */
-        const attachEvent = (element, eventName, callback, event) => {
-            if (element && eventName && element.getAttribute("listener") !== "true") {
+        const attachEvent = (element, eventName, callback) => {
+            if (element && eventName && typeof callback === 'function' && element.getAttribute("listener") !== "true") {
                 element.setAttribute("listener", "true");
                 element.addEventListener(eventName, (event) => {
                     callback(event);
@@ -1482,21 +1567,25 @@ if (!is_null($pub_type)) {
         };
 
         const openMetaUI = (e) => {
-             console.log(e)
-            const selectedMetas = e.target.dataset.selectedMeta.split(',');
+            const metaControl = e.currentTarget;
             const metaContainer = document.getElementById('meta-checkboxes');
+            if (!(metaControl instanceof HTMLElement) || !metaContainer) return;
+
+            const selectedMetas = (metaControl.dataset.selectedMeta ?? '').split(',').filter(Boolean);
             const metaCheckboxes = metaContainer.getElementsByTagName("input");
 
             // get scroll offset ??? if we ever want to add the drag modal back
             // const scrollPosMetaContainer = document.querySelector('#dragable_modal .modal-body');
 
             // move to correct position
-            let pos = getAbsPosition(e.target);
+            const pos = getAbsPosition(metaControl);
+            if (!pos) return;
+
             // metaContainer.style.top = `${pos.y + scrollPosMetaContainer.scrollTop}px`;
             metaContainer.style.top = `${pos.y}px`;            
             metaContainer.style.left = `${pos.x}px`;
             metaContainer.style.zIndex = 1000;
-            metaContainer.dataset.keywordId = e.target.dataset.keywordId;
+            metaContainer.dataset.keywordId = metaControl.dataset.keywordId ?? '';
 
             // reset all check boxes
             for (let i = 0; i < metaCheckboxes.length; i++) {
@@ -1521,7 +1610,7 @@ if (!is_null($pub_type)) {
         const metaSelect = document.querySelectorAll('.meta-control');
 
         metaSelect.forEach(mBox => {
-            attachEvent(mBox, "click", openMetaUI, event)
+            attachEvent(mBox, "click", openMetaUI)
         })
 
         /**
@@ -1529,8 +1618,8 @@ if (!is_null($pub_type)) {
          */
         document.addEventListener('click', function(e) {
             const target = e.target;
-            let metaContainer = document.getElementById("meta-checkboxes");
-            if (!metaContainer.contains(target) && !metaContainer.classList.contains('hide-disp')) {
+            const metaContainer = document.getElementById("meta-checkboxes");
+            if (metaContainer && !metaContainer.contains(target) && !metaContainer.classList.contains('hide-disp')) {
                 metaContainer.classList.add('hide-disp');
             }
 
@@ -1540,41 +1629,42 @@ if (!is_null($pub_type)) {
             });
 
             // attach word jump here
-            if (target.classList.contains('word-jump')) {
+            if (target instanceof Element && target.classList.contains('word-jump')) {
                 // get the word keyword id
-                const keywordChipId = target.parentNode.id;
+                const keywordChipId = target.parentElement?.id ?? '';
                 let keywordId = keywordChipId.split("-").pop();
-                Highlighter.keywordFocus(keywordId);
+                if (keywordId) Highlighter.keywordFocus(keywordId);
             }
         })
 
-        document.getElementById('addkeywords').addEventListener('keydown', function(e) {
+        const addKeywordsInput = document.getElementById('addkeywords');
+        addKeywordsInput?.addEventListener('keydown', function(e) {
             e.stopPropagation();
-            if (e.keyCode == 13) {
-                runAddKeyword();
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                Highlighter.runAddKeyword();
             }
         });
 
 
         const spinnerRemove = (location) => {
 
-            const elem = document.querySelector(`#${location}`).querySelector(`#spinnerSpan`);
-            try {
-                elem.parentNode.removeChild(elem);
-            } catch (error) {
-                // continue 
-            }
+            const container = document.getElementById(location);
+            container?.querySelector('#spinnerSpan')?.remove();
 
         }
 
         const spinnerAdd = (location) => {
+
+            const container = document.getElementById(location);
+            if (!container || container.querySelector('#spinnerSpan')) return;
 
             const node = document.createElement('span');
             const shadow = node.attachShadow({
                 mode: 'open'
             });
             node.setAttribute('id', 'spinnerSpan')
-            document.querySelector(`#${location}`)?.prepend(node);
+            container.prepend(node);
 
             shadow.innerHTML = ` 
                             <link rel="stylesheet" type="text/css" href="/css/bootstrap/bootstrap.min.css">
@@ -1612,9 +1702,13 @@ if (!is_null($pub_type)) {
         }
 
         const metaStage = (event) => {
+            if (!(event.currentTarget instanceof HTMLInputElement)) return;
+
             const publication_index_id = $('#meta-checkboxes').attr('data-publication-index-id');
             const publication_keyword_id = $('#meta-checkboxes').attr('data-keyword-id');
             const indices_keyword_meta_id = event.currentTarget.dataset.indicesKeywordMetaId;
+            if (!publication_index_id || !publication_keyword_id || !indices_keyword_meta_id) return;
+
             const action = (event.currentTarget.checked) ? 'addKeywordMeta' : 'removeKeywordMeta';
             const jsonData = {
                 action,
@@ -1626,25 +1720,30 @@ if (!is_null($pub_type)) {
         }
 
         const metaResponseHandler = (response) => {
-            const action = response.action;
-            const keyword_id = response.keyword_id;
-            const meta_id = response.meta_id.toString();
+            const action = response?.action;
+            const keyword_id = response?.keyword_id;
+            const meta_id = response?.meta_id?.toString();
+            if (!action || !keyword_id || !meta_id) return;
 
             const chip = document.querySelector(`#chip-keyword-${keyword_id} .meta-control`);
-            const dataSelectedMeta = chip.dataset.selectedMeta.split(',');
+            if (!chip) return;
+
+            const dataSelectedMeta = (chip.dataset.selectedMeta ?? '').split(',').filter(Boolean);
 
 
             if (action == 'removeMeta') {
                 chip.dataset['selectedMeta'] = dataSelectedMeta.filter((i) => i != meta_id).toString();
                 const subMeta = document.querySelector(`#chip-keyword-${keyword_id} .sub-meta-${meta_id}`);
-                subMeta.remove();
+                subMeta?.remove();
 
             } else {
                 dataSelectedMeta.push(`${meta_id}`);
                 chip.dataset['selectedMeta'] = dataSelectedMeta.toString();
                 const metaCB = document.querySelector(`#meta_${meta_id}`);
-                const MetaText = metaCB.nextElementSibling.innerText;
+                const MetaText = metaCB?.nextElementSibling?.textContent?.trim();
                 const subMeta = document.querySelector(`#chip-keyword-${keyword_id}`);
+                if (!MetaText || !subMeta) return;
+
                 const el = document.createElement("li");
                 el.classList.add(`sub-meta-${meta_id}`)
                 el.innerHTML = `<strong>${MetaText}</strong>`
@@ -1776,6 +1875,7 @@ if (!is_null($pub_type)) {
             searchInputs.forEach((item) => {
                  const inputSearch = document.getElementById(item.inputId);
                  const selectOptions = document.querySelectorAll(`#${item.searchId} li .dropdown-item`);
+                 if (!(inputSearch instanceof HTMLInputElement)) return;
                  
                  inputSearch.addEventListener('keyup', function() {
                     const filter = inputSearch.value.toLowerCase();
@@ -1802,8 +1902,11 @@ if (!is_null($pub_type)) {
                 }
             });
             if (missingImages.length > 0) {
-                document.getElementById('missing-images-alert-container').classList.remove('d-none');
+                const alertContainerParent = document.getElementById('missing-images-alert-container');
                 const alertContainer = document.getElementById('missing-images-alert');
+                if (!alertContainerParent || !alertContainer) return;
+
+                alertContainerParent.classList.remove('d-none');
                 missingImages.forEach((imgSrc) => {
                     alertContainer.innerHTML += `<div class="chip chip-warning active" role="chip" aria-label="Missing Image">
                         ${imgSrc}

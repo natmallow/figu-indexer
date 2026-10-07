@@ -68,36 +68,71 @@ class User extends DBConnection
         $_SESSION['actionResponse'] = $_POST['name_first'] . ' has been saved!';
     }
 
-    public function updateUserRoles()
-    {
+public function updateUserRoles()
+{
+    $username = $_POST['username'] ?? '';
+    $roles = $_POST['roles'] ?? [];
 
-        // remove all roles
-        $sql = "DELETE FROM link_user_role WHERE username = :username";
-        $pdoc = $this->dbc->prepare($sql);
-        $paramArr = [
-            ':username' => $_POST['username']
-        ];
-        $pdoc->execute($paramArr);
+    if ($username === '') {
+        return;
+    }
 
-        // add roles back
-        $sql = "INSERT INTO link_user_role( 
+    if (!is_array($roles)) {
+        $roles = [];
+    }
+
+    // Only allow valid numeric role IDs.
+    $roles = array_values(
+        array_unique(
+            array_filter(
+                $roles,
+                static fn($roleId) => filter_var($roleId, FILTER_VALIDATE_INT) !== false
+            )
+        )
+    );
+
+    /*
+     * Remove the user's editable roles while preserving super_admin.
+     * super_admin is intentionally managed manually and is not included
+     * in the role-selection control on users.php.
+     */
+    $sql = "
+        DELETE LUR
+        FROM link_user_role LUR
+        INNER JOIN role R ON R.role_id = LUR.role_id
+        WHERE LUR.username = :username
+        AND R.role_name <> 'super_admin'
+    ";
+
+    $pdoc = $this->dbc->prepare($sql);
+    $pdoc->execute([
+        ':username' => $username
+    ]);
+
+    // No selected roles is valid.
+    if ($roles === []) {
+        return;
+    }
+
+    $sql = "
+        INSERT INTO link_user_role (
             username,
             role_id
         ) VALUES (
             :username,
             :role_id
-        )";
-        $pdoc = $this->dbc->prepare($sql);
+        )
+    ";
 
-        $roles = $_POST['roles'];
+    $pdoc = $this->dbc->prepare($sql);
 
-        for ($i = 0; $i < count($roles); $i++) {
-            $pdoc->execute([
-                ':username' => $_POST['username'],
-                ':role_id' => $roles[$i]
-            ]);
-        }
+    foreach ($roles as $roleId) {
+        $pdoc->execute([
+            ':username' => $username,
+            ':role_id' => $roleId
+        ]);
     }
+}
 
     public function updateUser()
     {

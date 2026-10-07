@@ -38,6 +38,8 @@ $publicationName = null;
 $publicationAbbr = null;
 $publicationIndexRs = [];
 
+$statusLookup = $PublicationIndex->getPublicationStatusLookup();
+
 // $indices_id = ''; passed in
 $name = '';
 $description_html = '';
@@ -915,7 +917,7 @@ if ($indices_id) {
 
 
 
-        bulkUpdateModal = new bootstrap.Modal(document.getElementById('modalBulkUpdate'));
+        bulkUpdateModal = new bootstrap.Modal(document.getElementById("modalBulkUpdate"));
         document.querySelector("#bulk-update-btn").addEventListener("click", function(e) {
             e.preventDefault();
 
@@ -923,9 +925,34 @@ if ($indices_id) {
             document.getElementById("bulkUpdateProceedButton").disabled = false;
 
             if (selectedRows?.length > 0) {
-                
+                bulkUpdateModalBody.html(`
+                <div class="input-group mb-0">
+                                    <label class="input-group-text" for="publication_status">Select</label>
+                                    <select class="form-select" 
+                                            aria-label="Index Status" 
+                                            name="publication_status" 
+                                            id="publication_status" >
+                                        <?php 
+                                            if (empty($publicationIndex->publication_index_status)) {
+                                                $selectStatus = 'Not started';
+                                            } else {
+                                                $selectStatus = $publicationIndex->publication_index_status;
+                                            } 
+                                        ?>
+                                                
+                                        <?php foreach ($statusLookup as $row) : ?>
+                                            <option 
+                                                class="<?=strToCss($row["publication_status_lookup"]) ?>" 
+                                                value="<?= $row["publication_status_lookup"] ?>" 
+                                                <?= $row["publication_status_lookup"] == $selectStatus ? 'selected' : '' ?>>
+                                                <?= $row["publication_status_lookup"] ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>      
+                                </div>
+                `);
             } else {
-                bulkUpdateModalBody.html(`Check mark the publication(s) to be updated.`)
+                bulkUpdateModalBody.html("Check mark the publication(s) to be updated.")
                 document.getElementById("bulkUpdateProceedButton").disabled = true;
             }
 
@@ -933,7 +960,7 @@ if ($indices_id) {
         });
 
         // pop up       
-        keywordModal = new bootstrap.Modal(document.getElementById('modalMasterKeywordSearch'));
+        keywordModal = new bootstrap.Modal(document.getElementById("modalMasterKeywordSearch"));
         document.querySelector("#search-publication-btn").addEventListener("click", function(e) {
             e.preventDefault();
 
@@ -943,7 +970,7 @@ if ($indices_id) {
             if (selectedRows?.length > 0) {
                 getMasterKeyWords(selectedRows.length)
             } else {
-                keywordSearchModal.html(`Check mark the publication(s) to be searched.`)
+                keywordSearchModal.html("Check mark the publication(s) to be searched.")
                 document.getElementById("proceedButton").disabled = true;
             }
 
@@ -1101,12 +1128,76 @@ if ($indices_id) {
             });
         }
 
+        function runBulkUpdate() {
+            const proceedButton = document.getElementById("bulkUpdateProceedButton");
+
+            // Disable button
+            proceedButton.disabled = true;
+
+            // Toggle visibility of elements
+            toggleVisibility("bulkUpdateSubmitLoad");
+            toggleVisibility("bulkUpdateProceedButton");
+
+            const publicationStatus = document.getElementById("publication_status").value;
+
+            const requestData = {
+                action: 'run-bulk-update',
+                indices_id: `<?= $indices_id ?>`,
+                publication_ids: selectedRows.map(item => item.publication_id),
+                publication_status: publicationStatus
+            };
+
+            console.log('Sending bulk update request:', requestData);
+
+            fetch('indexlinks_ajax.php', {
+                method: 'POST',
+                headers: {
+                    "Content-Type": "application/json",
+                    "Accept": "application/json"
+                },
+                body: JSON.stringify(requestData),
+                cache: 'no-cache'
+            }).then(response => {
+                console.log('Received response:', response);
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.text(); // Get the raw text response first
+            }).then(text => {
+                console.log('Response text:', text);
+                try {
+                    const data = JSON.parse(text); // Manually parse JSON
+                    console.log('Parsed JSON:', data);
+                    bulkUpdateModal.hide();
+                    // Optionally, you can refresh the grid or perform other actions here
+                } catch (error) {
+                    console.error('Failed to parse JSON:', error);
+                    throw new Error('Invalid JSON response');
+                }
+            }).catch(error => {
+                alert('Bulk update failed');
+                console.error('Bulk update failed', error);
+            }).finally(() => {
+                console.log('Finally block executed for bulk update');
+                // Re-enable button and toggle visibility of elements
+                proceedButton.disabled = false;
+                toggleVisibility("bulkUpdateSubmitLoad");
+                toggleVisibility("bulkUpdateProceedButton");
+            });
+        }
+
+
 
 
 
         document.querySelector("#proceedButton").addEventListener("click", function(e) {
             e.preventDefault();
             runMasterKeywordSearch()
+        })
+
+        document.querySelector("#bulkUpdateProceedButton").addEventListener("click", function(e) {
+            e.preventDefault();
+            runBulkUpdate()
         })
     </script>
 
