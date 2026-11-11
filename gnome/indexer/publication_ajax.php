@@ -57,20 +57,48 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         $rtnArr = [];
 
-        $keyWordsCheck = explode(',', $newKeyWord);
+        $keyWordsCheck = array_values(
+            array_filter(
+                array_map('trim', explode(',', $newKeyWord)),
+                static fn($word) => $word !== ''
+            )
+        );
 
-        // filter out the words on ignore list
+        // Filter out words on the ignore list.
         $keyWords = $Keyword->checkKeywords($keyWordsCheck);
 
-        for ($i = 0; $i < count($keyWords); $i++) {
-            $keyWordId = $PublicationIndex->linkSaveKeywords($publicationIndexId, $keyWords[$i])[0];
-            $keyWord = trim($keyWords[$i]);
-            array_push($rtnArr, array("id" => "$keyWordId", "value" => "$keyWord", "metas" => []));
+        foreach ($keyWords as $keyWord) {
+            $keyWord = trim($keyWord);
+
+            $linkResult = $PublicationIndex->linkSaveKeywords(
+                $publicationIndexId,
+                $keyWord
+            );
+
+            if (!is_array($linkResult) || !array_key_exists(0, $linkResult)) {
+                error_log(
+                    'linkSaveKeywords returned no keyword ID for: ' .
+                        $keyWord .
+                        ' Result: ' .
+                        print_r($linkResult, true)
+                );
+
+                continue;
+            }
+
+            $keyWordId = $linkResult[0];
+
+            $rtnArr[] = [
+                'id' => (string) $keyWordId,
+                'value' => $keyWord,
+                'metas' => []
+            ];
         }
 
         $keywordRtnArr['publication_index_id'] = $publicationIndexId;
         $keywordRtnArr['keywords'] = $rtnArr;
         $keywordRtnArr['success'] = 1;
+
         echo json_encode($keywordRtnArr);
     } elseif ($action == 'removeKeyword') {
 
